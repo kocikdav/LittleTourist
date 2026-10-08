@@ -243,7 +243,7 @@
 
   const apps=[
     {id:"plocha",icon:"🖥️",label:"Plocha"},{id:"posta",icon:"📧",label:"Pošta"},
-    {id:"metro",icon:"🚇",label:"Metro"},{id:"napoveda",icon:"💡",label:"Nápověda"}
+    {id:"metro",icon:"🚇",label:"Metro"},{id:"hotely",icon:"🏨",label:"Hotely"},{id:"napoveda",icon:"💡",label:"Nápověda"}
   ];
 
   /* ---------- rail ---------- */
@@ -261,9 +261,29 @@
     const pg=!mailRead, mg=mailRead&&!solved;
     const posta=`<button class="desk-icon ${pg?'glow':''}" data-app="posta"><span class="di">📧</span><span class="dl">Pošta</span>${pg?'<span class="start-here">Nový e-mail 👆</span>':''}</button>`;
     const metro=`<button class="desk-icon ${mg?'glow':''}" data-app="metro"><span class="di">🚇</span><span class="dl">Metro</span>${mg?'<span class="start-here">Najdi cestu 👆</span>':''}</button>`;
+    const hotely=`<button class="desk-icon" data-app="hotely"><span class="di">🏨</span><span class="dl">Hotely</span></button>`;
     const napo=`<button class="desk-icon" data-app="napoveda"><span class="di">💡</span><span class="dl">Nápověda</span></button>`;
     const deco=["🗑️ Koš","🌐 Prohlížeč"].map(d=>{const[i,...n]=d.split(" ");return `<div class="desk-icon disabled"><span class="di">${i}</span><span class="dl">${n.join(" ")}</span></div>`;}).join("");
-    return `<div class="desktop"><div class="plane-deco">🚇</div><div class="desk-grid">${posta}${metro}${napo}${deco}</div></div>`;
+    return `<div class="desktop"><div class="plane-deco">🚇</div><div class="desk-grid">${posta}${metro}${hotely}${napo}${deco}</div></div>`;
+  }
+
+  /* ---------- Hotely (souhrn rezervace) ---------- */
+  function hotelyHTML(){
+    return `<div class="appwin"><div class="app-title">🏨 Hotely <span class="search">Moje rezervace</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div style="flex:1;overflow:auto;background:#f5f6f8;padding:20px;">
+        <div class="resv" style="margin:0 auto;max-width:460px;">
+          <div class="resv-top">🏨 ${HOTEL_NAME}</div>
+          <div class="resv-body">
+            <div class="resv-row"><span class="k">Host</span><span>TY</span></div>
+            <div class="resv-row"><span class="k">Město</span><span>Milán</span></div>
+            <div class="resv-row"><span class="k">Počet nocí</span><span>3</span></div>
+            <div class="resv-row"><span class="k">Hodnocení</span><span>4 ★</span></div>
+            <div class="resv-row"><span class="k">Snídaně</span><span>v ceně</span></div>
+            <div class="resv-row"><span class="k">Nejbližší stanice metra</span><span><strong>${HOTEL_STATION}</strong> (M5)</span></div>
+          </div>
+        </div>
+      </div></div>`;
   }
 
   /* ---------- mail ---------- */
@@ -377,7 +397,7 @@
   /* ---------- render ---------- */
   function renderScreen(){
     document.getElementById("screen").innerHTML =
-      app==="plocha"?plochaHTML():app==="posta"?postaHTML():app==="metro"?metroHTML():napovedaHTML();
+      app==="plocha"?plochaHTML():app==="posta"?postaHTML():app==="metro"?metroHTML():app==="hotely"?hotelyHTML():napovedaHTML();
   }
   function render(){ renderRail(); renderScreen(); }
   function openApp(id){

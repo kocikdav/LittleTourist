@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Malý cestovatel — cesta do Milána</title>
+<style>
+  :root{
+    --accent:#0f6cbd; --accent-dark:#115ea3; --ok:#107c10;
+    --text:#1b2a3a; --text-2:#5a6b7b; --border:#dbe4ee;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;min-height:100%;font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    color:var(--text);background:linear-gradient(170deg,#bfe0ff 0%,#8ec0f0 42%,#6aa7e4 100%);
+    display:flex;flex-direction:column;align-items:center;padding:34px 18px 90px;}
+
+  .clouds{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+  .clouds span{position:absolute;font-size:60px;opacity:.5;}
+  .clouds .c1{top:12%;left:6%;}
+  .clouds .c2{top:24%;right:8%;font-size:80px;}
+  .clouds .c3{bottom:18%;left:12%;font-size:70px;opacity:.4;}
+
+  .wrap{position:relative;z-index:1;width:100%;max-width:820px;}
+
+  .hero{background:#fff;border-radius:22px;padding:34px 30px 30px;text-align:center;
+    box-shadow:0 18px 44px rgba(20,50,90,.18);}
+  .hero .plane{font-size:54px;line-height:1;display:inline-block;transform:rotate(-12deg);}
+  .hero h1{margin:10px 0 6px;font-size:34px;letter-spacing:.3px;}
+  .hero p{margin:0 auto;max-width:520px;color:var(--text-2);font-size:16px;line-height:1.5;}
+  .start{display:inline-block;margin-top:22px;background:var(--accent);color:#fff;text-decoration:none;
+    font-size:18px;font-weight:700;padding:14px 30px;border-radius:999px;box-shadow:0 8px 18px rgba(15,108,189,.35);
+    transition:transform .08s,background .15s;}
+  .start:hover{background:var(--accent-dark);transform:translateY(-1px);}
+  .hero .tagline{margin-top:14px;font-size:13px;color:var(--text-2);}
+
+  .journey{margin-top:24px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.6);
+    border-radius:18px;padding:20px 22px;backdrop-filter:blur(2px);}
+  .journey h2{margin:0 0 14px;font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:#2c4660;}
+  .stops{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;}
+  .stop{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;}
+  .stop .n{flex:0 0 30px;height:30px;border-radius:50%;background:#eaf2fb;color:var(--accent-dark);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;}
+  .stop .ic{font-size:20px;}
+  .stop .nm{font-size:14px;font-weight:600;line-height:1.2;}
+  .stop .nm small{display:block;font-weight:400;color:var(--text-2);font-size:12px;}
+
+  .footnote{text-align:center;margin-top:18px;color:#2c4660;font-size:13px;opacity:.85;}
+
+  /* semi-secret button + jump panel */
+  .secret{position:fixed;right:14px;bottom:14px;z-index:5;width:38px;height:38px;border-radius:50%;
+    border:none;background:rgba(255,255,255,.35);color:#30506e;font-size:17px;cursor:pointer;opacity:.45;
+    transition:opacity .2s,transform .1s;}
+  .secret:hover{opacity:1;transform:scale(1.06);}
+  .overlay{position:fixed;inset:0;z-index:10;background:rgba(14,32,54,.5);display:flex;align-items:center;justify-content:center;padding:18px;}
+  .overlay[hidden]{display:none;}
+  .jump{background:#fff;border-radius:18px;padding:24px;max-width:520px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+  .jump h3{margin:0 0 4px;font-size:19px;}
+  .jump .sub{margin:0 0 16px;color:var(--text-2);font-size:13.5px;}
+  .jump-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;}
+  .jump-grid a{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--text);
+    background:#f3f7fc;border:1px solid var(--border);border-radius:10px;padding:10px 11px;font-size:13.5px;font-weight:600;}
+  .jump-grid a:hover{border-color:var(--accent);background:#eaf2fb;}
+  .jump-grid a .jn{flex:0 0 24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+  .jump .close{margin-top:16px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:11px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .jump .close:hover{background:var(--accent-dark);}
+</style>
+</head>
+<body>
+  <div class="clouds"><span class="c1">☁️</span><span class="c2">☁️</span><span class="c3">☁️</span></div>
+
+  <div class="wrap">
+    <header class="hero">
+      <div class="plane">✈️</div>
+      <h1>Malý cestovatel</h1>
+      <p>Vydej se na cestu do Milána a cestou vyřeš <strong>7 úkolů z informatiky</strong>. Každý splněný úkol tě posune o kus dál.</p>
+      <a class="start" href="ukoly/01-sifra-mesto/">Začít dobrodružství →</a>
+      <div class="tagline">Projdeš: šifry · podmínky · rozhodovací strom · čas · mapy · plánování</div>
+    </header>
+
+    <section class="journey">
+      <h2>🧭 Tvoje cesta — 7 zastávek</h2>
+      <ol class="stops" id="stops"></ol>
+    </section>
+
+    <div class="footnote">Postupuj podle pořadí — každý úkol na konci otevře ten další. 🛫</div>
+  </div>
+
+  <button class="secret" id="secretBtn" title="Pro učitele — pokračovat od úkolu" aria-label="Pokračovat od úkolu">🔑</button>
+  <div class="overlay" id="overlay" hidden>
+    <div class="jump">
+      <h3>🔑 Pokračovat od úkolu</h3>
+      <p class="sub">Vracíš se k rozpracované cestě? Skoč rovnou na úkol, kde jsi skončil(a).</p>
+      <div class="jump-grid" id="jumpGrid"></div>
+      <button class="close" id="closeBtn">Zavřít</button>
+    </div>
+  </div>
+
+<script>
+  const TASKS=[
+    {n:1, ic:"🔐", title:"Tajné město",        sub:"Caesarova šifra",      path:"ukoly/01-sifra-mesto/"},
+    {n:2, ic:"🎫", title:"Výběr letenky",       sub:"podle podmínek",       path:"ukoly/02-vyber-letenky/"},
+    {n:3, ic:"🧳", title:"Odbavení zavazadla",  sub:"rozhodovací strom",    path:"ukoly/03-odbaveni-kufru/"},
+    {n:4, ic:"🛫", title:"Stihni nástup",       sub:"brána a čas",          path:"ukoly/04-vyber-gate/"},
+    {n:5, ic:"🏨", title:"Výběr hotelu",        sub:"podle požadavků",      path:"ukoly/05-vyber-hotelu/"},
+    {n:6, ic:"🚇", title:"Trasa metrem",        sub:"nejkratší cesta",      path:"ukoly/06-trasa-metra/"},
+    {n:7, ic:"🗺️", title:"Plán dne",            sub:"podle počasí",         path:"ukoly/07-plan-vyletu/"}
+  ];
+
+  document.getElementById("stops").innerHTML = TASKS.map(t=>`
+    <li class="stop"><span class="n">${t.n}</span><span class="ic">${t.ic}</span>
+      <span class="nm">${t.title}<small>${t.sub}</small></span></li>`).join("");
+
+  document.getElementById("jumpGrid").innerHTML = TASKS.map(t=>`
+    <a href="${t.path}"><span class="jn">${t.n}</span>${t.ic} ${t.title}</a>`).join("");
+
+  const overlay=document.getElementById("overlay");
+  document.getElementById("secretBtn").addEventListener("click",()=>overlay.hidden=false);
+  document.getElementById("closeBtn").addEventListener("click",()=>overlay.hidden=true);
+  overlay.addEventListener("click",e=>{ if(e.target===overlay) overlay.hidden=true; });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") overlay.hidden=true; });
+</script>
+</body>
+</html>

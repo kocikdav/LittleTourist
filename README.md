@@ -1,6 +1,6 @@
-# LittleTourist - Interaktivní úkoly pro žáky
+# LittleTourist – Interaktivní úkoly pro žáky
 
-Webová aplikace určená pro výuku informatiky. Žáci v ní plní interaktivní úkoly přímo ve svém webovém prohlížeči.
+Webová aplikace určená pro výuku informatiky na 1. stupni ZŠ (5. třída). Žáci v ní plní interaktivní úkoly přímo ve svém webovém prohlížeči.
 
 Živá verze: https://kocikdav.github.io/LittleTourist/
 
@@ -8,18 +8,52 @@ Webová aplikace určená pro výuku informatiky. Žáci v ní plní interaktivn
 
 ## O projektu
 
-Cílem aplikace je procvičování látky ICT hravou a praktickou formou. Všechny úkoly běží přímo na straně klienta bez nutnosti instalovat další softwarové vybavení.
+Žák se vydá na **cestu do Milána** a cestou vyřeší **7 úkolů z informatiky**. Příběh i úkoly jsou v češtině a procvičují látku ICT hravou a praktickou formou. Všechno běží na straně klienta (žádná instalace, žádné přihlašování, žádné ukládání dat) — každý splněný úkol na konci otevře ten další.
+
+Úvodní stránka (`index.html`) nabízí start cesty a drobné „tajné“ tlačítko 🔑 vpravo dole, kterým se dá skočit rovnou na konkrétní úkol (např. když se žák k rozpracované cestě vrací později).
 
 ## Přehled úkolů
 
-- Úkol 1: [Doplň název úkolu]
-- Úkol 2: [Doplň název úkolu]
-- Úkol 3: [Doplň název úkolu]
+| # | Úkol | Procvičuje |
+|---|------|------------|
+| 1 | **Tajné město** | Caesarova šifra (kódování/dekódování) |
+| 2 | **Výběr letenky** | výběr podle podmínek (rozpočet, přestup, datum…) |
+| 3 | **Odbavení zavazadla** | rozvětvený rozhodovací strom se smyčkou |
+| 4 | **Stihni nástup k bráně** | orientace na tabuli, práce s časem a přestupem |
+| 5 | **Výběr hotelu** | splnění požadavků, čtení z mapy |
+| 6 | **Trasa metrem** | hledání nejkratší cesty (graf, přestupy) |
+| 7 | **Plán dne podle počasí** | přiřazování podle podmínek (drag & drop) |
 
----
+## Struktura
+
+```
+index.html                 – úvodní rozcestník (menu + skok na úkol)
+ukoly/
+  01-sifra-mesto/
+  02-vyber-letenky/
+  03-odbaveni-kufru/
+  04-vyber-gate/
+  05-vyber-hotelu/
+  06-trasa-metra/
+  07-plan-vyletu/          – každý úkol = samostatná stránka s vlastní URL
+.nojekyll                  – vypne zpracování Jekyllem na GitHub Pages
+```
+
+Každý úkol je **samostatná stránka s vlastní URL**, takže jde otevřít i přímo a snadno se ladí.
 
 ## Technické řešení
 
-TBS
+- Čistě **statický web** — HTML, CSS a vanilla JavaScript, **bez build kroku** a bez frameworků.
+- Sdílené „desktopové“ rozhraní: levý panel s aplikacemi (Pošta, Nápověda a aplikace k danému úkolu), plocha a horní lišta s postupem.
+- Běží na **GitHub Pages** (větev `main`, kořen repozitáře). Všechny cesty jsou relativní, aby web fungoval i v podadresáři `/LittleTourist/`.
+- Bez serveru a bez ukládání dat — žáci jen procházejí stránky a plní úkoly.
 
+## Lokální spuštění
 
+Stačí otevřít `index.html` v prohlížeči. Kvůli přechodům mezi úkoly (čisté URL `ukoly/…/`) je nejlepší použít jednoduchý lokální server, např.:
+
+```
+npx serve .
+```
+
+a otevřít zobrazenou adresu.

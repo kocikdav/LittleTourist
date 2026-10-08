@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Úkol 2 – Výběr letenky | Malý cestovatel</title>
+<style>
+  :root{
+    --accent:#0f6cbd; --accent-dark:#115ea3;
+    --app-bg:#faf9f8; --border:#edebe9; --border-strong:#e1dfdd;
+    --text:#242424; --text-2:#616161; --unread:#0f6cbd;
+    --sel:#e9f0f8; --sel-strong:#cfe4fa;
+    --ok:#107c10; --err:#d13438; --rail:#223049; --rail-2:#2c3e5e;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    color:var(--text);background:#f3f2f1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+  .game-bar{flex:0 0 auto;height:52px;background:#fff;border-bottom:1px solid var(--border-strong);
+    display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+    box-shadow:0 1px 3px rgba(0,0,0,.04);z-index:5;}
+  .game-bar .brand{font-weight:700;font-size:16px;}
+  .game-bar .brand .plane{margin-right:6px;}
+  .game-bar .task-name{color:var(--text-2);font-size:14px;}
+  .progress-pill{background:var(--accent);color:#fff;font-size:13px;font-weight:600;
+    padding:5px 12px;border-radius:999px;}
+
+  .os-body{flex:1;display:flex;min-height:0;}
+  .rail{flex:0 0 190px;background:var(--rail);color:#eaeef6;display:flex;flex-direction:column;
+    gap:6px;padding:14px 10px;}
+  .rail .rail-title{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#8ea2c4;padding:4px 10px 10px;}
+  .rail-app{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:none;
+    color:#eaeef6;padding:11px 12px;border-radius:10px;cursor:pointer;font-size:15px;text-align:left;font-family:inherit;}
+  .rail-app:hover{background:var(--rail-2);}
+  .rail-app.active{background:var(--accent);color:#fff;}
+  .rail-app .ri{font-size:20px;width:24px;text-align:center;}
+  .rail-app.glow{box-shadow:0 0 0 0 rgba(255,196,0,.7);animation:glowpulse 1.8s infinite;}
+  @keyframes glowpulse{0%{box-shadow:0 0 0 0 rgba(255,196,0,.75);}70%{box-shadow:0 0 0 12px rgba(255,196,0,0);}100%{box-shadow:0 0 0 0 rgba(255,196,0,0);}}
+
+  .screen{flex:1;min-width:0;position:relative;overflow:hidden;background:#fff;}
+
+  /* desktop */
+  .desktop{height:100%;width:100%;background:linear-gradient(160deg,#9ed0ff 0%,#6aa9e9 45%,#4f8fd6 100%);padding:26px;position:relative;}
+  .desktop .plane-deco{position:absolute;right:40px;top:30px;font-size:54px;transform:rotate(-8deg);opacity:.9;}
+  .desk-grid{display:grid;grid-template-columns:repeat(auto-fill,96px);gap:18px 14px;align-content:start;}
+  .desk-icon{width:96px;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;
+    align-items:center;gap:7px;padding:8px 4px;border-radius:10px;font-family:inherit;color:#0a2a4d;}
+  .desk-icon .di{width:60px;height:60px;border-radius:14px;background:#fff;display:flex;align-items:center;
+    justify-content:center;font-size:30px;box-shadow:0 4px 10px rgba(0,0,0,.18);}
+  .desk-icon .dl{font-size:13px;font-weight:600;color:#06264a;background:rgba(255,255,255,.55);padding:1px 7px;border-radius:6px;}
+  .desk-icon:hover:not(.disabled){background:rgba(255,255,255,.22);}
+  .desk-icon.disabled{cursor:default;opacity:.65;}
+  .desk-icon.glow .di{animation:glowpulse 1.8s infinite;}
+  .start-here{margin-top:2px;font-size:11px;font-weight:700;color:#fff;background:#e8820c;
+    padding:3px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+
+  .appwin,.mailapp{display:flex;flex-direction:column;height:100%;}
+  .app-title{flex:0 0 auto;height:46px;background:var(--accent);color:#fff;display:flex;align-items:center;
+    gap:16px;padding:0 16px;font-weight:600;font-size:15px;}
+  .app-title .search{flex:1;max-width:440px;background:rgba(255,255,255,.18);border-radius:4px;padding:7px 12px;font-size:13px;color:#eaf2fb;font-weight:400;}
+  .app-title .me{margin-left:auto;}
+  .avatar{flex:0 0 36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;}
+
+  /* mail */
+  .mail-body{flex:1;display:flex;min-height:0;}
+  .folders{flex:0 0 210px;background:var(--app-bg);border-right:1px solid var(--border);padding:12px 8px;overflow-y:auto;}
+  .compose{width:100%;border:1px solid var(--border-strong);background:#fff;color:var(--accent);font-weight:600;
+    font-size:14px;padding:9px 12px;border-radius:6px;cursor:pointer;margin-bottom:12px;text-align:left;font-family:inherit;}
+  .folders ul{list-style:none;margin:0;padding:0;}
+  .folders li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;font-size:14px;color:var(--text);}
+  .folders li .cnt{margin-left:auto;color:var(--text-2);font-size:12px;font-weight:600;}
+  .folders li.active{background:var(--sel-strong);font-weight:600;}
+  .list{flex:0 0 340px;background:#fff;border-right:1px solid var(--border);overflow-y:auto;}
+  .list-head{padding:12px 16px;font-weight:700;font-size:16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;}
+  .email-row{display:flex;gap:12px;padding:12px 16px 12px 12px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid transparent;}
+  .email-row:hover{background:#f5f9fd;}
+  .email-row.selected{background:var(--sel);border-left-color:var(--accent);}
+  .email-row.unread{border-left-color:var(--unread);}
+  .email-main{flex:1;min-width:0;}
+  .email-line1{display:flex;align-items:center;gap:8px;}
+  .email-sender{font-size:14px;}
+  .email-row.unread .email-sender{font-weight:700;}
+  .email-time{margin-left:auto;font-size:12px;color:var(--text-2);white-space:nowrap;}
+  .email-subject{font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .email-row.unread .email-subject{font-weight:600;color:var(--accent-dark);}
+  .email-preview{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dot{flex:0 0 8px;height:8px;border-radius:50%;background:var(--unread);align-self:center;}
+  .dot.hidden{visibility:hidden;}
+  .reader{flex:1;background:#fff;overflow-y:auto;padding:24px 32px;min-width:0;}
+  .reader .subject{font-size:21px;font-weight:600;margin:0 0 14px;}
+  .reader-head{display:flex;gap:12px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .reader-head .avatar{flex:0 0 40px;height:40px;}
+  .reader-from .name{font-weight:600;font-size:14px;}
+  .reader-from .meta{font-size:12px;color:var(--text-2);}
+  .reader-body{font-size:15px;line-height:1.6;max-width:680px;}
+  .reader-body p{margin:0 0 12px;}
+  .cond-list{list-style:none;margin:10px 0 14px;padding:14px 18px;background:#eef4fb;border:1px solid #cfe0f3;border-radius:10px;}
+  .cond-list li{padding:5px 0;font-size:15px;}
+  .mailcta{display:inline-block;background:var(--accent);color:#fff;padding:9px 16px;border-radius:8px;font-weight:600;font-size:14px;}
+
+  /* airline */
+  .air-body{flex:1;display:flex;min-height:0;}
+  .conds{flex:0 0 290px;background:var(--app-bg);border-right:1px solid var(--border);padding:18px 16px;overflow-y:auto;}
+  .conds h3{margin:0 0 4px;font-size:15px;}
+  .conds .route-big{font-size:17px;font-weight:700;margin:2px 0 14px;color:var(--accent-dark);}
+  .cond-row{display:flex;gap:9px;align-items:flex-start;font-size:14px;margin-bottom:11px;line-height:1.35;}
+  .cond-row .ic{width:20px;text-align:center;}
+  .cond-row b{display:block;}
+  .cond-row span{color:var(--text-2);font-size:13px;}
+  .rej-counter{margin-top:8px;padding:10px 12px;background:#fff;border:1px solid var(--border-strong);border-radius:8px;font-size:14px;}
+  .rej-counter b{color:var(--accent-dark);}
+  .conds .tip{margin-top:12px;font-size:13px;color:var(--text-2);}
+
+  .flights{flex:1;overflow-y:auto;padding:18px 22px;background:#f5f6f8;}
+  .flights .fl-head{font-size:15px;font-weight:700;margin:0 0 14px;}
+  .flight-card{background:#fff;border:1px solid var(--border-strong);border-radius:12px;padding:15px 18px;
+    margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .flight-card.rejected{opacity:.65;background:#f4f4f4;}
+  .fc-top{display:flex;align-items:center;gap:12px;}
+  .fc-code{font-weight:700;font-size:15px;}
+  .fc-price{margin-left:auto;font-size:20px;font-weight:700;color:var(--accent-dark);}
+  .fc-route{font-size:16px;font-weight:600;margin:9px 0 10px;}
+  .fc-meta{display:flex;flex-wrap:wrap;gap:10px 18px;font-size:13.5px;color:#444;}
+  .fc-actions{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{padding:9px 16px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid transparent;font-family:inherit;}
+  .btn-book{background:var(--accent);color:#fff;}
+  .btn-book:hover{background:var(--accent-dark);}
+  .btn-reject{background:#fff;color:var(--err);border-color:#e6b4b5;}
+  .btn-reject:hover{background:#fdeeee;}
+  .btn-ghost{background:#fff;color:var(--text-2);border-color:var(--border-strong);}
+  .reason-box{margin-top:14px;padding:13px 15px;background:#fff7e6;border:1px solid #f0dca0;border-radius:10px;}
+  .reason-box .q{font-size:14px;font-weight:600;margin-bottom:9px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{background:#fff;border:1px solid var(--border-strong);border-radius:999px;padding:8px 13px;cursor:pointer;font-size:13px;font-family:inherit;}
+  .chip:hover{border-color:var(--accent);background:#eef4fb;}
+  .badge-rej{display:inline-block;background:#fdeeee;color:var(--err);border:1px solid #f3c6c7;
+    padding:5px 11px;border-radius:999px;font-size:13px;font-weight:600;margin-top:4px;}
+  .fc-fb{margin-top:10px;font-size:13.5px;min-height:0;}
+  .fc-fb .err{color:var(--err);font-weight:600;}
+  .fc-fb .warn{color:#8a6d00;font-weight:600;}
+  .shake{animation:shake .35s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  .booked{max-width:560px;margin:46px auto;text-align:center;background:#fff;border:1px solid #bfe3bf;
+    border-radius:16px;padding:34px 30px;box-shadow:0 6px 24px rgba(0,0,0,.08);}
+  .booked .big{font-size:50px;}
+  .booked h2{margin:10px 0 6px;color:var(--ok);}
+  .booked p{color:var(--text);font-size:15px;margin:4px 0;}
+  .continue{display:inline-block;margin-top:18px;background:var(--ok);color:#fff;text-decoration:none;
+    padding:12px 24px;border-radius:8px;font-weight:600;font-size:15px;}
+  .continue:hover{background:#0b5e0b;}
+
+  /* nápověda */
+  .napoveda{flex:1;overflow-y:auto;padding:28px 32px;background:#fafafa;}
+  .napoveda .np-wrap{max-width:620px;margin:0 auto;}
+  .np-intro{font-size:14px;color:var(--text-2);background:#eef4fb;border:1px solid #cfe0f3;padding:12px 14px;border-radius:8px;margin:0 0 18px;}
+  .hint-card{background:#fff;border:1px solid var(--border-strong);border-left:4px solid #e8a30c;border-radius:8px;padding:14px 16px;margin-bottom:14px;}
+  .hint-card b{display:block;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:#b8790a;margin-bottom:6px;}
+  .hint-card p{margin:0;font-size:15px;line-height:1.55;}
+  .reveal-btn{background:#e8820c;color:#fff;border:none;padding:11px 20px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .reveal-btn:hover{background:#cf7109;}
+  .all-shown{font-size:13px;color:var(--text-2);}
+
+  @media (max-width:1050px){ .folders{display:none;} }
+  @media (max-width:860px){
+    .rail{flex:0 0 64px;} .rail .rail-title,.rail-app .rl{display:none;} .rail-app{justify-content:center;}
+    .air-body,.mail-body{flex-direction:column;}
+    .conds{flex:0 0 auto;border-right:none;border-bottom:1px solid var(--border);}
+    .list{flex:0 0 auto;max-height:34vh;border-right:none;border-bottom:1px solid var(--border);}
+  }
+</style>
+</head>
+<body>
+
+  <div class="game-bar">
+    <div class="brand"><span class="plane">✈️</span>Malý cestovatel</div>
+    <div class="task-name">Úkol 2 — Vyber správnou letenku</div>
+    <div class="progress-pill">Úkol 2&nbsp;/&nbsp;7</div>
+  </div>
+
+  <div class="os-body">
+    <nav class="rail" id="rail"></nav>
+    <main class="screen" id="screen"></main>
+  </div>
+
+<script>
+  /* ---- zadání (z e-mailu) ---- */
+  const TARGET={
+    route:"Praha → Milán",
+    dateLabel:"sobota 11. 7. 2026",
+    budget:"max 6 000 Kč",
+    transfers:"nejvýše 1",
+    layover:"nejvýše 3 hodiny",
+    baggage:"odbavené v ceně"
+  };
+
+  /* violation: která podmínka je porušena (null = vyhovuje všem) */
+  const flights=[
+    {id:"IA-118", route:"Praha → Vídeň → Milán", dateLabel:"so 11. 7. 2026",
+     transferInfo:"1 přestup — Vídeň (1 h 35 min)", baggageLabel:"Zavazadlo v ceně",
+     priceLabel:"5 490 Kč", violation:null},
+    {id:"IA-205", route:"Praha → Milán (přímý let)", dateLabel:"so 11. 7. 2026",
+     transferInfo:"Přímý let (bez přestupu)", baggageLabel:"Zavazadlo v ceně",
+     priceLabel:"7 300 Kč", violation:"cena"},
+    {id:"IA-337", route:"Praha → Vídeň → Curych → Milán", dateLabel:"so 11. 7. 2026",
+     transferInfo:"2 přestupy — Vídeň (1 h 10) + Curych (1 h 00)", baggageLabel:"Zavazadlo v ceně",
+     priceLabel:"5 100 Kč", violation:"prestupy"},
+    {id:"IA-441", route:"Praha → Frankfurt → Milán", dateLabel:"so 11. 7. 2026",
+     transferInfo:"1 přestup — Frankfurt (4 h 50 min)", baggageLabel:"Zavazadlo v ceně",
+     priceLabel:"5 200 Kč", violation:"doba"},
+    {id:"IA-509", route:"Praha → Milán (přímý let)", dateLabel:"so 11. 7. 2026",
+     transferInfo:"Přímý let (bez přestupu)", baggageLabel:"Zavazadlo jen za příplatek",
+     priceLabel:"4 800 Kč", violation:"zavazadlo"},
+    {id:"IA-612", route:"Praha → Mnichov → Milán", dateLabel:"ne 12. 7. 2026",
+     transferInfo:"1 přestup — Mnichov (1 h 20 min)", baggageLabel:"Zavazadlo v ceně",
+     priceLabel:"5 300 Kč", violation:"datum"}
+  ];
+
+  const REASONS=[
+    {id:"cena",      label:"💰 Moc drahá (nad rozpočet)"},
+    {id:"prestupy",  label:"🔁 Víc než 1 přestup"},
+    {id:"doba",      label:"⏱️ Moc dlouhý přestup"},
+    {id:"zavazadlo", label:"🧳 Zavazadlo není v ceně"},
+    {id:"datum",     label:"📅 Špatné datum"}
+  ];
+
+  const emails=[
+    { id:"mama", unread:true, sender:"Máma", initials:"M", color:"#107c10",
+      subject:"Podmínky na letenku ✈️", time:"8:05",
+      preview:"Posílám ti pravidla, podle kterých vyber letenku do Milána…",
+      body:`
+        <p>Ahoj cestovateli! 👋</p>
+        <p>Tak už víš, že letíš za Marcem do <strong>Milána</strong>. Posílám ti podmínky, podle kterých vyber letenku:</p>
+        <ul class="cond-list">
+          <li>✈️ <strong>Trasa:</strong> Praha → Milán</li>
+          <li>📅 <strong>Datum odletu:</strong> sobota 11. 7. 2026</li>
+          <li>💰 <strong>Rozpočet:</strong> maximálně 6 000 Kč</li>
+          <li>🔁 <strong>Přestupy:</strong> nejvýše 1</li>
+          <li>⏱️ <strong>Délka přestupu:</strong> nejvýše 3 hodiny</li>
+          <li>🧳 <strong>Zavazadlo:</strong> odbavené zavazadlo musí být v ceně</li>
+        </ul>
+        <p>Letenku vyber v aplikaci <strong>Imaginarium Airlines</strong> 👉 <span class="mailcta">✈️ Imaginarium Airlines</span></p>
+        <p>Ať to vyjde! 😘 Máma</p>`
+    },
+    { id:"ia-news", unread:false, sender:"Imaginarium Airlines", initials:"✈", color:"#0f6cbd",
+      subject:"Vítejte na palubě! Tipy pro cestující", time:"včera",
+      preview:"Děkujeme, že létáte s Imaginarium Airlines. Před cestou doporučujeme…",
+      body:`<p>Vážený cestující,</p><p>děkujeme, že létáte s <strong>Imaginarium Airlines</strong>. Nezapomeňte si zkontrolovat velikost zavazadla a přijďte k odbavení včas.</p><p>Přejeme příjemný let! ✈️</p>` },
+    { id:"marco", unread:false, sender:"Marco", initials:"M", color:"#b4009e",
+      subject:"Přijeď za mnou na prázdniny! 🤫", time:"po",
+      preview:"Sejdeme se v jednom krásném městě… už víš ve kterém! 😉",
+      body:`<p>Ahoj! 👋</p><p>Super, že dorazíš! Už víš, že se potkáme v <strong>Milánu</strong>. Dej mi vědět, kdy přiletíš. Těším se!</p><p>Tvůj kamarád Marco</p>` }
+  ];
+
+  const apps=[
+    {id:"plocha",      icon:"🖥️", label:"Plocha"},
+    {id:"posta",       icon:"📧", label:"Pošta"},
+    {id:"imaginarium", icon:"✈️", label:"Airlines"},
+    {id:"napoveda",    icon:"💡", label:"Nápověda"}
+  ];
+
+  let app="plocha";
+  let currentId="mama";
+  let conditionsRead=false;
+  let openReasonFor=null;
+  let booked=false;
+  let hintLevel=0;
+
+  const rejectedCount=()=>flights.filter(f=>f.rejected).length;
+
+  /* ---------- rail ---------- */
+  function renderRail(){
+    document.getElementById("rail").innerHTML=
+      `<div class="rail-title">Aplikace</div>`+
+      apps.map(a=>{
+        let glow="";
+        if(a.id==="posta" && !conditionsRead) glow="glow";
+        if(a.id==="imaginarium" && conditionsRead && !booked) glow="glow";
+        return `<button class="rail-app ${app===a.id?'active':''} ${glow}" data-app="${a.id}">
+          <span class="ri">${a.icon}</span><span class="rl">${a.label}</span></button>`;
+      }).join("");
+  }
+
+  /* ---------- plocha ---------- */
+  function plochaHTML(){
+    const postaGlow = !conditionsRead;
+    const airGlow = conditionsRead && !booked;
+    const posta=`<button class="desk-icon ${postaGlow?'glow':''}" data-app="posta">
+        <span class="di">📧</span><span class="dl">Pošta</span>
+        ${postaGlow?'<span class="start-here">Nový e-mail 👆</span>':''}</button>`;
+    const air=`<button class="desk-icon ${airGlow?'glow':''}" data-app="imaginarium">
+        <span class="di">✈️</span><span class="dl">Airlines</span>
+        ${airGlow?'<span class="start-here">Vyber letenku 👆</span>':''}</button>`;
+    const napo=`<button class="desk-icon" data-app="napoveda"><span class="di">💡</span><span class="dl">Nápověda</span></button>`;
+    const deco=["🗑️ Koš","🌐 Prohlížeč","🎵 Hudba"].map(d=>{const[i,...n]=d.split(" ");
+      return `<div class="desk-icon disabled"><span class="di">${i}</span><span class="dl">${n.join(" ")}</span></div>`;}).join("");
+    return `<div class="desktop"><div class="plane-deco">🛫</div>
+      <div class="desk-grid">${posta}${air}${napo}${deco}</div></div>`;
+  }
+
+  /* ---------- mail ---------- */
+  function listHTML(){
+    return emails.map(e=>`
+      <div class="email-row ${e.unread?'unread':''} ${e.id===currentId?'selected':''}" data-mail="${e.id}">
+        <div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="email-main">
+          <div class="email-line1"><span class="email-sender">${e.sender}</span><span class="email-time">${e.time}</span></div>
+          <div class="email-subject">${e.subject}</div>
+          <div class="email-preview">${e.preview}</div>
+        </div>
+        <div class="dot ${e.unread?'':'hidden'}"></div>
+      </div>`).join("");
+  }
+  function readerHTML(){
+    const e=emails.find(x=>x.id===currentId);
+    return `<div class="subject">${e.subject}</div>
+      <div class="reader-head"><div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="reader-from"><div class="name">${e.sender}</div>
+          <div class="meta">komu: mně &nbsp;•&nbsp; dnes ${e.time}</div></div></div>
+      <div class="reader-body">${e.body}</div>`;
+  }
+  function postaHTML(){
+    const unread=emails.filter(e=>e.unread).length;
+    return `<div class="mailapp">
+      <div class="app-title">📧 Pošta <span class="search">🔍&nbsp; Hledat v e-mailech</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="mail-body">
+        <nav class="folders"><button class="compose">✏️&nbsp; Nový e-mail</button>
+          <ul><li class="active">📥 Doručená pošta ${unread?`<span class="cnt">${unread}</span>`:''}</li>
+          <li>📤 Odeslaná pošta</li><li>📄 Koncepty</li><li>🗑️ Koš</li><li>🚫 Nevyžádaná pošta</li></ul></nav>
+        <section class="list"><div class="list-head">Doručená pošta</div>${listHTML()}</section>
+        <section class="reader">${readerHTML()}</section>
+      </div></div>`;
+  }
+
+  /* ---------- airline ---------- */
+  function condsPanelHTML(){
+    const c=(ic,title,val)=>`<div class="cond-row"><span class="ic">${ic}</span><div><b>${title}</b><span>${val}</span></div></div>`;
+    return `<div class="conds">
+      <h3>Tvoje zadání</h3>
+      <div class="route-big">${TARGET.route}</div>
+      ${c("📅","Datum odletu",TARGET.dateLabel)}
+      ${c("💰","Rozpočet",TARGET.budget)}
+      ${c("🔁","Přestupy",TARGET.transfers)}
+      ${c("⏱️","Délka přestupu",TARGET.layover)}
+      ${c("🧳","Zavazadlo",TARGET.baggage)}
+      <div class="rej-counter">Vyřazeno nevhodných letenek: <b>${rejectedCount()} / 5</b></div>
+      <div class="tip">Vyřaď všechny letenky, které nevyhovují. Zbyde ti jen jedna — tu rezervuj. ✅</div>
+    </div>`;
+  }
+  function flightCardHTML(f){
+    if(f.rejected){
+      const rl=(REASONS.find(r=>r.id===f.violation)||{}).label||"";
+      return `<div class="flight-card rejected" id="card-${f.id}">
+        <div class="fc-top"><span class="fc-code">✈️ ${f.id}</span><span class="fc-price">${f.priceLabel}</span></div>
+        <div class="fc-route">${f.route}</div>
+        <div class="badge-rej">❌ Vyřazeno — ${rl}</div></div>`;
+    }
+    const chips = openReasonFor===f.id
+      ? `<div class="reason-box"><div class="q">Kterou podmínku tahle letenka porušuje?</div>
+          <div class="chips">${REASONS.map(r=>`<button class="chip" data-rej="${f.id}|${r.id}">${r.label}</button>`).join("")}
+            <button class="chip btn-ghost" data-rejcancel="1">Zpět</button></div></div>`
+      : "";
+    return `<div class="flight-card" id="card-${f.id}">
+      <div class="fc-top"><span class="fc-code">✈️ ${f.id}</span><span class="fc-price">${f.priceLabel}</span></div>
+      <div class="fc-route">${f.route}</div>
+      <div class="fc-meta"><span>📅 ${f.dateLabel}</span><span>🔁 ${f.transferInfo}</span><span>🧳 ${f.baggageLabel}</span></div>
+      <div class="fc-actions">
+        <button class="btn btn-book" data-book="${f.id}">✅ Rezervovat</button>
+        <button class="btn btn-reject" data-reason-toggle="${f.id}">❌ Vyřadit</button>
+      </div>
+      ${chips}
+      <div class="fc-fb" id="fb-${f.id}"></div>
+    </div>`;
+  }
+  function imaginariumHTML(){
+    if(booked){
+      const w=flights.find(f=>f.violation===null);
+      return `<div class="appwin"><div class="app-title">✈️ Imaginarium Airlines</div>
+        <div style="flex:1;overflow:auto;background:#f5f6f8;">
+          <div class="booked"><div class="big">🎫✅</div>
+            <h2>Letenka rezervována!</h2>
+            <p>Letíš <strong>${w.id}</strong>: ${w.route}</p>
+            <p>${w.dateLabel} · ${w.transferInfo} · ${w.baggageLabel} · ${w.priceLabel}</p>
+            <a class="continue" href="../03-odbaveni-kufru/">Pokračovat na další úkol →</a>
+          </div></div></div>`;
+    }
+    return `<div class="appwin"><div class="app-title">✈️ Imaginarium Airlines
+        <span class="search">🔍&nbsp; Praha → Milán</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="air-body">${condsPanelHTML()}
+        <section class="flights"><div class="fl-head">Nabídka letenek (${flights.length})</div>
+          ${flights.map(flightCardHTML).join("")}</section>
+      </div></div>`;
+  }
+
+  /* ---------- nápověda ---------- */
+  const HINTS=[
+    `<b>Nápověda 1</b><p>Správná letenka musí splňovat <strong>všechny</strong> podmínky ze zadání najednou — stačí jedna porušená a letenka je ze hry.</p>`,
+    `<b>Nápověda 2</b><p>U každé letenky si projdi zadání bod po bodu: <strong>datum, cenu, počet přestupů, délku přestupu i zavazadlo</strong>. Potom vyber, kterou podmínku porušuje.</p>`
+  ];
+  function napovedaHTML(){
+    const cards=HINTS.slice(0,hintLevel).map(h=>`<div class="hint-card">${h}</div>`).join("");
+    const btn=hintLevel<HINTS.length
+      ? `<button class="reveal-btn" id="revealHint">${hintLevel===0?'Zobrazit nápovědu':'Další nápověda'}</button>`
+      : `<p class="all-shown">To je vše. Teď to zkus! 😊</p>`;
+    return `<div class="appwin"><div class="app-title">💡 Nápověda</div>
+      <div class="napoveda"><div class="np-wrap">
+        <p class="np-intro">Nevíš si rady s výběrem letenky? Odkrývej nápovědy postupně.</p>
+        ${cards}${btn}</div></div></div>`;
+  }
+
+  /* ---------- render & akce ---------- */
+  function renderScreen(){
+    const s=document.getElementById("screen");
+    s.innerHTML = app==="plocha"?plochaHTML() : app==="posta"?postaHTML()
+      : app==="imaginarium"?imaginariumHTML() : napovedaHTML();
+  }
+  function render(){ renderRail(); renderScreen(); }
+
+  function openApp(id){
+    if(id==="posta" && !conditionsRead){
+      conditionsRead=true;
+      const m=emails.find(e=>e.id==="mama"); if(m) m.unread=false;
+    }
+    app=id; render();
+  }
+  function selectEmail(id){
+    const e=emails.find(x=>x.id===id); if(e&&e.unread) e.unread=false;
+    currentId=id; renderScreen();
+  }
+
+  function cardMsg(fid,html,cls){
+    const fb=document.getElementById("fb-"+fid); if(fb) fb.innerHTML=`<span class="${cls}">${html}</span>`;
+    const card=document.getElementById("card-"+fid);
+    if(card){ card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake"); }
+  }
+
+  function chooseReason(fid,rid){
+    const f=flights.find(x=>x.id===fid); if(!f) return;
+    if(f.violation===null){ cardMsg(fid,"Počkej — tahle letenka splňuje všechny podmínky. Tu nevyřazuj! 🤔","warn"); return; }
+    if(rid===f.violation){ f.rejected=true; openReasonFor=null; render(); }
+    else{ cardMsg(fid,"Tohle není ten důvod — tuhle podmínku letenka splňuje. Zkus jiný. 🔁","err"); }
+  }
+  function book(fid){
+    const f=flights.find(x=>x.id===fid); if(!f) return;
+    if(f.violation!==null){ cardMsg(fid,"Tahle letenka nevyhovuje všem podmínkám. Nejdřív ji vyřaď (vyber, co porušuje). ❌","err"); return; }
+    if(rejectedCount()<5){ cardMsg(fid,`Nejdřív vyřaď všechny nevhodné letenky. (Vyřazeno ${rejectedCount()}/5) 🔎`,"warn"); return; }
+    booked=true; render();
+  }
+
+  /* náhodné pořadí nabídky letenek (jednou při načtení stránky) */
+  (function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } })(flights);
+
+  document.addEventListener("click", e=>{
+    const railBtn=e.target.closest("[data-app]");
+    if(railBtn){ openApp(railBtn.dataset.app); return; }
+    const row=e.target.closest("[data-mail]");
+    if(row){ selectEmail(row.dataset.mail); return; }
+    const tog=e.target.closest("[data-reason-toggle]");
+    if(tog){ const id=tog.dataset.reasonToggle; openReasonFor=(openReasonFor===id?null:id); renderScreen(); return; }
+    const rej=e.target.closest("[data-rej]");
+    if(rej){ const[fid,rid]=rej.dataset.rej.split("|"); chooseReason(fid,rid); return; }
+    if(e.target.closest("[data-rejcancel]")){ openReasonFor=null; renderScreen(); return; }
+    const bk=e.target.closest("[data-book]");
+    if(bk){ book(bk.dataset.book); return; }
+    if(e.target.id==="revealHint"){ if(hintLevel<HINTS.length){hintLevel++; renderScreen();} }
+  });
+
+  render();
+</script>
+</body>
+</html>

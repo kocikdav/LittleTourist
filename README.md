@@ -27,7 +27,7 @@ Webová aplikace určená pro výuku informatiky na 1. stupni ZŠ (5. třída). 
 ## Struktura
 
 ```
-index.html                 – úvodní rozcestník (náhodně vybere město A/B + skok na úkol)
+index.html                 – úvodní rozcestník (náhodně vybere město A/B/C/D + skok na úkol)
 mesta/
   a/                       – město A (stejná cesta, jiný cíl)
     01-sifra-mesto/
@@ -38,6 +38,8 @@ mesta/
     06-trasa-metra/
     07-plan-vyletu/        – každý úkol = samostatná stránka s vlastní URL
   b/                       – město B (kopie A s jiným městem; stejná struktura)
+  c/                       – město C (kopie A s jiným městem; stejná struktura)
+  d/                       – město D (kopie A s jiným městem; stejná struktura)
 .nojekyll                  – vypne zpracování Jekyllem na GitHub Pages
 ```
 

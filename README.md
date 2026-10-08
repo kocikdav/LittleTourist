@@ -8,7 +8,7 @@ Webová aplikace určená pro výuku informatiky na 1. stupni ZŠ (5. třída). 
 
 ## O projektu
 
-Žák se vydá na **cestu do Milána** a cestou vyřeší **7 úkolů z informatiky**. Příběh i úkoly jsou v češtině a procvičují látku ICT hravou a praktickou formou. Všechno běží na straně klienta (žádná instalace, žádné přihlašování, žádné ukládání dat) — každý splněný úkol na konci otevře ten další.
+Žák se vydá na **cestu za kamarádem** a cestou vyřeší **7 úkolů z informatiky**. Příběh i úkoly jsou v češtině a procvičují látku ICT hravou a praktickou formou. Všechno běží na straně klienta (žádná instalace, žádné přihlašování, žádné ukládání dat) — každý splněný úkol na konci otevře ten další.
 
 Úvodní stránka (`index.html`) nabízí start cesty a drobné „tajné“ tlačítko 🔑 vpravo dole, kterým se dá skočit rovnou na konkrétní úkol (např. když se žák k rozpracované cestě vrací později).
 

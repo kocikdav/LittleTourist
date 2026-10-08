@@ -356,7 +356,7 @@
     const legend=Object.keys(LINES).map(L=>`<span><i style="background:${LINES[L].color}"></i>${L}</span>`).join("");
     let okOrFb="";
     if(solved){ okOrFb=`<div class="ok-panel"><h2>✅ Výborně!</h2>Našel(a) jsi nejkratší cestu — <strong>${count} stanic</strong>.
-        <br><a class="continue" href="../07-plan-vyletu/">Pokračovat na další úkol →</a></div>`; }
+        <br><a class="continue" href="../07-plan-vyletu/index.html">Pokračovat na další úkol →</a></div>`; }
     else { okOrFb=`<div class="mp-btns"><button data-undo="1" ${route.length<=0?'disabled':''}>↩︎ Zpět</button><button data-reset="1" ${route.length<=0?'disabled':''}>⟲ Začít znovu</button></div><div id="mfb"></div>`; }
     return `<div class="metro-panel">
       <h3>Tvůj úkol</h3>

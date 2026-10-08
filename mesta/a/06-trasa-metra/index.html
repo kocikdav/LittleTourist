@@ -355,8 +355,12 @@
     const routeTxt = ep.length? ep.map((id,i)=>`<span class="${i===ep.length-1?'cur':''}">${nameOf(id)}</span>`).join(" → ") : "<span style='color:#888'>Zatím nic — klikni na letiště ✈️.</span>";
     const legend=Object.keys(LINES).map(L=>`<span><i style="background:${LINES[L].color}"></i>${L}</span>`).join("");
     let okOrFb="";
-    if(solved){ okOrFb=`<div class="ok-panel"><h2>✅ Výborně!</h2>Našel(a) jsi nejkratší cestu — <strong>${count} stanic</strong>.
-        <br><a class="continue" href="../07-plan-vyletu/index.html">Pokračovat na další úkol →</a></div>`; }
+    if(solved){ const perfect=(count<=OPT);
+      okOrFb=perfect
+        ? `<div class="ok-panel"><h2>✅ Výborně!</h2>Našel(a) jsi <strong>nejkratší</strong> cestu — <strong>${count} stanic</strong>.
+            <br><a class="continue" href="../07-plan-vyletu/index.html">Pokračovat na další úkol →</a></div>`
+        : `<div class="ok-panel" style="background:#fff7e6;border-color:#f0c36d"><h2 style="color:#b8860b">✅ Dojel(a) jsi do cíle!</h2>Trasa má <strong>${count} stanic</strong> — to je v pořádku. 👍 Ale <strong>jde to i kratší</strong> (nejkratší cesta má ${OPT} stanic). Můžeš pokračovat, nebo to zkusit znovu.
+            <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><a class="continue" style="margin-top:0" href="../07-plan-vyletu/index.html">Pokračovat →</a><button data-reset="1" style="padding:11px 18px;border-radius:8px;border:1px solid #cdd3db;background:#fff;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit">⟲ Zkusit najít kratší</button></div></div>`; }
     else { okOrFb=`<div class="mp-btns"><button data-undo="1" ${route.length<=0?'disabled':''}>↩︎ Zpět</button><button data-reset="1" ${route.length<=0?'disabled':''}>⟲ Začít znovu</button></div><div id="mfb"></div>`; }
     return `<div class="metro-panel">
       <h3>Tvůj úkol</h3>
@@ -416,7 +420,7 @@
     route.push(id);
     if(id===HOTEL){
       const count=expanded(route).length-1;
-      if(count===OPT){ solved=true; render(); return; }
+      if(count<=OPT+2){ solved=true; render(); return; }
       renderScreen(); metroMsg(`Dojel(a) jsi do cíle za ${count} stanic — ale jde to i kratší! Zkus <em>Začít znovu</em> a najdi nejkratší cestu.`,"warn"); return;
     }
     renderScreen();
@@ -429,7 +433,7 @@
     if(e.target.id==="revealHint"){ if(hintLevel<HINTS.length){hintLevel++; renderScreen();} return; }
     const stn=e.target.closest("[data-stn]"); if(stn){ clickStation(stn.dataset.stn); return; }
     if(e.target.closest("[data-undo]")){ if(route.length>0){ route.pop(); renderScreen(); } return; }
-    if(e.target.closest("[data-reset]")){ route=[]; renderScreen(); return; }
+    if(e.target.closest("[data-reset]")){ route=[]; solved=false; renderScreen(); return; }
   });
 
   render();

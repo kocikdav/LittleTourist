@@ -27,19 +27,21 @@ Webová aplikace určená pro výuku informatiky na 1. stupni ZŠ (5. třída). 
 ## Struktura
 
 ```
-index.html                 – úvodní rozcestník (menu + skok na úkol)
-ukoly/
-  01-sifra-mesto/
-  02-vyber-letenky/
-  03-odbaveni-kufru/
-  04-vyber-gate/
-  05-vyber-hotelu/
-  06-trasa-metra/
-  07-plan-vyletu/          – každý úkol = samostatná stránka s vlastní URL
+index.html                 – úvodní rozcestník (náhodně vybere město A/B + skok na úkol)
+mesta/
+  a/                       – město A (stejná cesta, jiný cíl)
+    01-sifra-mesto/
+    02-vyber-letenky/
+    03-odbaveni-kufru/
+    04-vyber-gate/
+    05-vyber-hotelu/
+    06-trasa-metra/
+    07-plan-vyletu/        – každý úkol = samostatná stránka s vlastní URL
+  b/                       – město B (kopie A s jiným městem; stejná struktura)
 .nojekyll                  – vypne zpracování Jekyllem na GitHub Pages
 ```
 
-Každý úkol je **samostatná stránka s vlastní URL**, takže jde otevřít i přímo a snadno se ladí.
+Cesta existuje ve **více městech** (`mesta/a`, `mesta/b`, …). Úvodní stránka vybere město **náhodně**; v menu se města označují jen jako **A, B, …**, aby neprozradila cíl cesty (ten je odpovědí na 1. úkol). Každý úkol je **samostatná stránka s vlastní URL**, takže jde otevřít i přímo a snadno se ladí.
 
 ## Technické řešení
 
@@ -50,7 +52,7 @@ Každý úkol je **samostatná stránka s vlastní URL**, takže jde otevřít i
 
 ## Lokální spuštění
 
-Stačí otevřít `index.html` v prohlížeči. Kvůli přechodům mezi úkoly (čisté URL `ukoly/…/`) je nejlepší použít jednoduchý lokální server, např.:
+Stačí otevřít `index.html` v prohlížeči. Případně můžeš použít jednoduchý lokální server, např.:
 
 ```
 npx serve .

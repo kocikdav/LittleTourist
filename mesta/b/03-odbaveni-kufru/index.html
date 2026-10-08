@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Úkol 3 – Odbavení zavazadla | Malý cestovatel</title>
+<style>
+  :root{
+    --accent:#0f6cbd; --accent-dark:#115ea3;
+    --app-bg:#faf9f8; --border:#edebe9; --border-strong:#e1dfdd;
+    --text:#242424; --text-2:#616161; --unread:#0f6cbd;
+    --sel:#e9f0f8; --sel-strong:#cfe4fa;
+    --ok:#107c10; --err:#d13438; --rail:#223049; --rail-2:#2c3e5e;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    color:var(--text);background:#f3f2f1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+  .game-bar{flex:0 0 auto;height:52px;background:#fff;border-bottom:1px solid var(--border-strong);
+    display:flex;align-items:center;justify-content:space-between;padding:0 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);z-index:5;}
+  .game-bar .brand{font-weight:700;font-size:16px;}
+  .game-bar .brand .plane{margin-right:6px;}
+  .game-bar .task-name{color:var(--text-2);font-size:14px;}
+  .progress-pill{background:var(--accent);color:#fff;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;}
+
+  .os-body{flex:1;display:flex;min-height:0;}
+  .rail{flex:0 0 190px;background:var(--rail);color:#eaeef6;display:flex;flex-direction:column;gap:6px;padding:14px 10px;}
+  .rail .rail-title{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#8ea2c4;padding:4px 10px 10px;}
+  .rail-app{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:none;color:#eaeef6;
+    padding:11px 12px;border-radius:10px;cursor:pointer;font-size:15px;text-align:left;font-family:inherit;}
+  .rail-app:hover{background:var(--rail-2);}
+  .rail-app.active{background:var(--accent);color:#fff;}
+  .rail-app .ri{font-size:20px;width:24px;text-align:center;}
+  .rail-app.glow{box-shadow:0 0 0 0 rgba(255,196,0,.7);animation:glowpulse 1.8s infinite;}
+  @keyframes glowpulse{0%{box-shadow:0 0 0 0 rgba(255,196,0,.75);}70%{box-shadow:0 0 0 12px rgba(255,196,0,0);}100%{box-shadow:0 0 0 0 rgba(255,196,0,0);}}
+
+  .screen{flex:1;min-width:0;position:relative;overflow:hidden;background:#fff;}
+
+  .desktop{height:100%;width:100%;background:linear-gradient(160deg,#9ed0ff 0%,#6aa9e9 45%,#4f8fd6 100%);padding:26px;position:relative;}
+  .desktop .plane-deco{position:absolute;right:40px;top:30px;font-size:54px;transform:rotate(-8deg);opacity:.9;}
+  .desk-grid{display:grid;grid-template-columns:repeat(auto-fill,96px);gap:18px 14px;align-content:start;}
+  .desk-icon{width:96px;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+    gap:7px;padding:8px 4px;border-radius:10px;font-family:inherit;color:#0a2a4d;}
+  .desk-icon .di{width:60px;height:60px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:30px;box-shadow:0 4px 10px rgba(0,0,0,.18);}
+  .desk-icon .dl{font-size:13px;font-weight:600;color:#06264a;background:rgba(255,255,255,.55);padding:1px 7px;border-radius:6px;}
+  .desk-icon:hover:not(.disabled){background:rgba(255,255,255,.22);}
+  .desk-icon.disabled{cursor:default;opacity:.65;}
+  .desk-icon.glow .di{animation:glowpulse 1.8s infinite;}
+  .start-here{margin-top:2px;font-size:11px;font-weight:700;color:#fff;background:#e8820c;padding:3px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+
+  .appwin,.mailapp{display:flex;flex-direction:column;height:100%;}
+  .app-title{flex:0 0 auto;height:46px;background:var(--accent);color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px;font-weight:600;font-size:15px;}
+  .app-title .search{flex:1;max-width:440px;background:rgba(255,255,255,.18);border-radius:4px;padding:7px 12px;font-size:13px;color:#eaf2fb;font-weight:400;}
+  .avatar{flex:0 0 36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;}
+
+  /* mail */
+  .mail-body{flex:1;display:flex;min-height:0;}
+  .folders{flex:0 0 210px;background:var(--app-bg);border-right:1px solid var(--border);padding:12px 8px;overflow-y:auto;}
+  .compose{width:100%;border:1px solid var(--border-strong);background:#fff;color:var(--accent);font-weight:600;font-size:14px;padding:9px 12px;border-radius:6px;cursor:pointer;margin-bottom:12px;text-align:left;font-family:inherit;}
+  .folders ul{list-style:none;margin:0;padding:0;}
+  .folders li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;font-size:14px;color:var(--text);}
+  .folders li .cnt{margin-left:auto;color:var(--text-2);font-size:12px;font-weight:600;}
+  .folders li.active{background:var(--sel-strong);font-weight:600;}
+  .list{flex:0 0 340px;background:#fff;border-right:1px solid var(--border);overflow-y:auto;}
+  .list-head{padding:12px 16px;font-weight:700;font-size:16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;}
+  .email-row{display:flex;gap:12px;padding:12px 16px 12px 12px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid transparent;}
+  .email-row:hover{background:#f5f9fd;}
+  .email-row.selected{background:var(--sel);border-left-color:var(--accent);}
+  .email-row.unread{border-left-color:var(--unread);}
+  .email-main{flex:1;min-width:0;}
+  .email-line1{display:flex;align-items:center;gap:8px;}
+  .email-sender{font-size:14px;}
+  .email-row.unread .email-sender{font-weight:700;}
+  .email-time{margin-left:auto;font-size:12px;color:var(--text-2);white-space:nowrap;}
+  .email-subject{font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .email-row.unread .email-subject{font-weight:600;color:var(--accent-dark);}
+  .email-preview{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dot{flex:0 0 8px;height:8px;border-radius:50%;background:var(--unread);align-self:center;}
+  .dot.hidden{visibility:hidden;}
+  .reader{flex:1;background:#fff;overflow-y:auto;padding:24px 32px;min-width:0;}
+  .reader .subject{font-size:21px;font-weight:600;margin:0 0 14px;}
+  .reader-head{display:flex;gap:12px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .reader-head .avatar{flex:0 0 40px;height:40px;}
+  .reader-from .name{font-weight:600;font-size:14px;}
+  .reader-from .meta{font-size:12px;color:var(--text-2);}
+  .reader-body{font-size:15px;line-height:1.6;max-width:720px;}
+  .reader-body p{margin:0 0 12px;}
+
+  /* boarding pass */
+  .boarding{max-width:520px;margin:18px 0;background:#fff;border:1px solid var(--border-strong);border-radius:16px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.08);}
+  .boarding.center{margin:30px auto;}
+  .bp-top{background:var(--accent);color:#fff;padding:14px 20px;font-weight:700;font-size:15px;display:flex;justify-content:space-between;}
+  .bp-body{padding:16px 20px;}
+  .bp-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--border);font-size:14px;}
+  .bp-row:last-child{border-bottom:none;}
+  .bp-row .k{color:var(--text-2);}
+  .bp-route{font-size:19px;font-weight:700;margin:4px 0 12px;text-align:center;color:var(--accent-dark);}
+
+  /* ---- Letiště ---- */
+  .letiste-body{flex:1;display:flex;min-height:0;}
+  .bag-panel{flex:0 0 240px;background:var(--app-bg);border-right:1px solid var(--border);padding:16px;overflow-y:auto;}
+  .bag-panel h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-2);}
+  .bag-card{background:#fff;border:1px solid var(--border-strong);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;}
+  .bag-card .bc-title{font-weight:700;margin-bottom:6px;}
+  .bag-card .row{display:flex;justify-content:space-between;gap:8px;margin:3px 0;}
+  .bag-card .k{color:var(--text-2);}
+  .chips2{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+  .chip2{background:#eef1f5;border-radius:999px;padding:4px 9px;font-size:12.5px;}
+  .moved{font-size:12px;color:var(--ok);margin-top:6px;}
+
+  .work{flex:1;display:flex;min-width:0;}
+  .dia-col{flex:0 0 auto;overflow:auto;padding:14px;border-right:1px solid var(--border);background:#f5f6f8;}
+  .card-col{flex:1;overflow:auto;padding:18px 20px;min-width:0;}
+
+  /* branching diagram */
+  .diagram-wrap{overflow-x:auto;}
+  .diagram{position:relative;}
+  .dia-svg{position:absolute;left:0;top:0;pointer-events:none;}
+  .edge{fill:none;stroke:#c6ccd6;stroke-width:3;stroke-linejoin:round;stroke-linecap:round;}
+  .edge.on{stroke:#2f9e44;stroke-width:4;}
+  .edge.cut{stroke:#dce0e6;stroke-dasharray:5 6;}
+  .dnode{position:absolute;display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:10px;
+    border:1px solid var(--border-strong);background:#fff;font-size:12.5px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+  .dnode .dic{font-size:16px;flex:0 0 auto;}
+  .dnode .dlbl{line-height:1.15;}
+  .dnode.se{justify-content:center;background:#eef4fb;border-color:#bcd7f2;font-weight:700;}
+  .dnode.dec{background:#fff7e6;border-color:#f0cf7a;}
+  .dnode.leaf{background:#eef6ff;border-color:#bcd7f2;}
+  .dnode.current{box-shadow:0 0 0 3px rgba(232,130,12,.45);border-color:#e8820c;z-index:2;}
+  .dnode.done{background:#eef8ee;border-color:#9fd6a3;}
+  .dnode.skip{opacity:.4;border-style:dashed;}
+  .dnode .dbadge{margin-left:auto;font-size:10px;font-weight:700;background:#cfe7d2;color:#1f7a2b;padding:1px 6px;border-radius:999px;}
+  .dlabel{position:absolute;font-size:11px;font-weight:700;color:#8a5a00;background:#f5f6f8;padding:0 4px;border-radius:4px;}
+
+  .active-card{max-width:520px;background:#fff;border:1px solid var(--border-strong);border-radius:12px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .active-card h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#b8790a;}
+  .active-card .q{font-size:18px;font-weight:600;margin:4px 0 14px;}
+  .ac-note{font-size:13px;color:var(--text-2);margin:-6px 0 14px;}
+  .ac-actions{display:flex;flex-wrap:wrap;gap:10px;}
+  .btn{padding:10px 18px;font-size:15px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid transparent;font-family:inherit;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-choice{background:#fff;border-color:var(--border-strong);color:var(--text);}
+  .btn-choice:hover{border-color:var(--accent);background:#eef4fb;}
+  #afb{margin-top:12px;font-size:13.5px;}
+  #afb .err{color:var(--err);font-weight:600;}
+
+  .repack{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;}
+  .rzone{flex:1;min-width:140px;border:2px dashed #c6ccd6;border-radius:10px;padding:10px;min-height:110px;background:#fafbfc;}
+  .rzone h4{margin:0 0 8px;font-size:12.5px;}
+  .rzone.kufr{border-color:#9ac0e8;} .rzone.prirucni{border-color:#9ad3a0;} .rzone.pool{border-color:#e0b96a;background:#fffdf5;}
+  .ritem{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border-strong);border-radius:8px;padding:6px 9px;margin-bottom:7px;cursor:grab;font-size:13px;}
+  .ritem:active{cursor:grabbing;}
+  .ritem .rbtns{margin-left:auto;display:flex;gap:4px;}
+  .ritem .rbtns button{font-size:12px;padding:3px 7px;border-radius:6px;border:1px solid var(--border-strong);background:#fff;cursor:pointer;}
+  .ritem .rbtns button:hover{background:#eef4fb;border-color:var(--accent);}
+  .ritem.wrong{border-color:var(--err);background:#fdeeee;}
+
+  .fountain{text-align:center;padding:10px 0 4px;}
+  .fountain .big{font-size:58px;line-height:1.1;}
+
+  .continue{display:inline-block;margin-top:16px;background:var(--ok);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:15px;}
+  .continue:hover{background:#0b5e0b;}
+
+  .napoveda{flex:1;overflow-y:auto;padding:28px 32px;background:#fafafa;}
+  .napoveda .np-wrap{max-width:620px;margin:0 auto;}
+  .np-intro{font-size:14px;color:var(--text-2);background:#eef4fb;border:1px solid #cfe0f3;padding:12px 14px;border-radius:8px;margin:0 0 18px;}
+  .hint-card{background:#fff;border:1px solid var(--border-strong);border-left:4px solid #e8a30c;border-radius:8px;padding:14px 16px;margin-bottom:14px;}
+  .hint-card b{display:block;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:#b8790a;margin-bottom:6px;}
+  .hint-card p{margin:0;font-size:15px;line-height:1.55;}
+  .reveal-btn{background:#e8820c;color:#fff;border:none;padding:11px 20px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .reveal-btn:hover{background:#cf7109;}
+  .all-shown{font-size:13px;color:var(--text-2);}
+
+  .shake{animation:shake .35s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  @media (max-width:1050px){ .folders{display:none;} }
+  @media (max-width:1150px){ .letiste-body{flex-direction:column;} .bag-panel{flex:0 0 auto;border-right:none;border-bottom:1px solid var(--border);} }
+  @media (max-width:860px){
+    .rail{flex:0 0 64px;} .rail .rail-title,.rail-app .rl{display:none;} .rail-app{justify-content:center;}
+    .work,.mail-body{flex-direction:column;}
+    .dia-col{flex:0 0 auto;border-right:none;border-bottom:1px solid var(--border);}
+    .list{flex:0 0 auto;max-height:34vh;border-right:none;border-bottom:1px solid var(--border);}
+  }
+</style>
+</head>
+<body>
+
+  <div class="game-bar">
+    <div class="brand"><span class="plane">✈️</span>Malý cestovatel</div>
+    <div class="task-name">Úkol 3 — Odbav si zavazadlo</div>
+    <div class="progress-pill">Úkol 3&nbsp;/&nbsp;7</div>
+  </div>
+
+  <div class="os-body">
+    <nav class="rail" id="rail"></nav>
+    <main class="screen" id="screen"></main>
+  </div>
+
+<script>
+  /* ---------- helpers ---------- */
+  const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+  function sample(arr,n){const c=[...arr],out=[];while(n-->0&&c.length)out.push(c.splice(Math.floor(Math.random()*c.length),1)[0]);return out;}
+  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+  /* ---------- randomizovaný scénář ---------- */
+  const TERMINALS=["Terminál 1","Terminál 2"];
+  const ALLOWED=[
+    {id:"telefon",name:"Telefon",icon:"📱"},{id:"kniha",name:"Kniha",icon:"📖"},
+    {id:"svacina",name:"Svačina",icon:"🥪"},{id:"sluchatka",name:"Sluchátka",icon:"🎧"},
+    {id:"krem",name:"Krém 50 ml",icon:"🧴"}
+  ];
+  const FORBIDDEN=[
+    {id:"gel",name:"Sprchový gel 250 ml",icon:"🧴"},{id:"dzus",name:"Džus 330 ml",icon:"🧃"},
+    {id:"nozik",name:"Švýcarský nožík",icon:"🔪"},{id:"nuzky",name:"Nůžky",icon:"✂️"}
+  ];
+  const BOTTLE={id:"lahev",name:"Prázdná láhev",icon:"💧"};
+  const scenario={
+    terminal: pick(TERMINALS),
+    bagWeight: rnd(18,27),
+    onlineCheckin: Math.random()<0.5,
+    carryOn: shuffle([
+      {...BOTTLE,allowed:true},
+      ...sample(ALLOWED,rnd(2,3)).map(x=>({...x,allowed:true})),
+      ...sample(FORBIDDEN,rnd(1,2)).map(x=>({...x,allowed:false}))
+    ])
+  };
+  const overweight = scenario.bagWeight>23;
+  const hasForbidden = scenario.carryOn.some(i=>!i.allowed);
+  const forbiddenNames = scenario.carryOn.filter(i=>!i.allowed).map(i=>i.name).join(", ");
+
+  /* ---------- kroky (s cyklem Q2 ⇄ A2) ---------- */
+  const steps=["terminal","q1"];
+  if(overweight) steps.push("a1");
+  steps.push("q2");
+  if(hasForbidden){ steps.push("a2","q2b"); }   // smyčka: přebal a znovu zkontroluj
+  steps.push("q3","leaf","security","fountain","end");
+  const idx=id=>steps.indexOf(id);
+
+  /* ---------- rozvětvený diagram se smyčkou ---------- */
+  const DIA={ w:570, h:492,
+    nodes:{
+      start:   {x:185,y:16, w:150,h:36,kind:"se",   icon:"🛫",label:"Start"},
+      q1:      {x:155,y:74, w:210,h:52,kind:"dec",            label:"Kufr těžší než 23 kg?"},
+      a1:      {x:15, y:150,w:150,h:46,kind:"action",icon:"🎁",label:"Vyřeš nadváhu"},
+      q2:      {x:155,y:236,w:210,h:52,kind:"dec",            label:"Zakázané věci v příručním?"},
+      a2:      {x:410,y:236,w:150,h:52,kind:"action",icon:"🧳",label:"Přebal příruční"},
+      q3:      {x:155,y:330,w:210,h:52,kind:"dec",            label:"Odbavil ses online?"},
+      automat: {x:70, y:418,w:180,h:54,kind:"leaf", icon:"🤖",label:"Samoobslužný automat"},
+      prepazka:{x:320,y:418,w:180,h:54,kind:"leaf", icon:"🧑‍✈️",label:"Přepážka s obsluhou"}
+    },
+    edges:[
+      {id:"e0",pts:[[260,52],[260,74]], trunk:true},
+      {id:"e1",pts:[[155,100],[90,100],[90,150]], dec:"q1", when:"ANO"},
+      {id:"e2",pts:[[260,126],[260,236]], dec:"q1", when:"NE"},
+      {id:"e3",pts:[[90,196],[90,215],[205,215],[205,236]], follow:"q1ANO"},
+      {id:"e4",pts:[[365,256],[410,256]], loopFwd:true},
+      {id:"eb",pts:[[410,272],[365,272]], loopBack:true},
+      {id:"e5",pts:[[260,288],[260,330]], loopExit:true},
+      {id:"e7",pts:[[260,382],[260,398],[160,398],[160,418]], dec:"q3", when:"automat"},
+      {id:"e8",pts:[[260,382],[260,398],[410,398],[410,418]], dec:"q3", when:"prepazka"}
+    ],
+    labels:[
+      {x:98,y:86,t:"ANO"},{x:268,y:172,t:"NE"},
+      {x:372,y:238,t:"ANO"},{x:378,y:280,t:"↺"},
+      {x:268,y:300,t:"NE"},{x:188,y:392,t:"ANO"},{x:332,y:392,t:"NE"}
+    ]
+  };
+
+  /* ---------- stav ---------- */
+  let app="plocha";
+  let currentId="letiste-mail";
+  let mailRead=false;
+  let hintLevel=0;
+  let si=0;
+  const answers={};          // q1/q3 -> větev
+  const placement={};        // repack
+  let repackWrong=[];
+  let repacked=false;        // přebaleno?
+  let bottleFilled=false;
+
+  const atEnd=()=>steps[si]==="end";
+  const treeStarted=()=>si>=idx("q1");
+  const hasForbiddenNow=()=>hasForbidden && !repacked;
+
+  function currentTreeNode(){
+    const s=steps[si];
+    if(s==="leaf") return answers.q3==="automat"?"automat":"prepazka";
+    return ({q1:"q1",a1:"a1",q2:"q2",q2b:"q2",a2:"a2",q3:"q3"})[s]||null;
+  }
+  function takenBefore(){
+    const set=new Set(), map={q1:"q1",a1:"a1",q2:"q2",q2b:"q2",a2:"a2",q3:"q3"};
+    steps.forEach((s,i)=>{ if(i<si){ if(map[s]) set.add(map[s]); if(s==="leaf") set.add(answers.q3==="automat"?"automat":"prepazka"); } });
+    return set;
+  }
+  function diaNodeState(key){
+    const cur=currentTreeNode();
+    if(key===cur) return "current";
+    if(key==="a1" && answers.q1==="NE") return "skip";
+    if(key==="automat" && answers.q3==="prepazka") return "skip";
+    if(key==="prepazka" && answers.q3==="automat") return "skip";
+    if(takenBefore().has(key)) return "done";
+    if(key==="start") return si>idx("terminal")?"done":"current";
+    return "idle";
+  }
+  function edgeState(e){
+    if(e.trunk) return treeStarted()?"on":"idle";
+    if(e.loopFwd) return (idx("a2")>=0 && si>=idx("a2"))?"on":"idle";
+    if(e.loopBack) return (idx("q2b")>=0 && si>=idx("q2b"))?"on":"idle";
+    if(e.loopExit) return si>=idx("q3")?"on":"idle";
+    if(e.follow){ const d=e.follow.slice(0,2),w=e.follow.slice(2); if(answers[d]===undefined) return "idle"; return answers[d]===w?"on":"cut"; }
+    if(e.dec){ if(answers[e.dec]===undefined) return "idle"; return answers[e.dec]===e.when?"on":"cut"; }
+    return "idle";
+  }
+  function diagramHTML(live){
+    const edges=DIA.edges.map(e=>`<polyline class="edge ${live?edgeState(e):'idle'}" points="${e.pts.map(p=>p.join(',')).join(' ')}" marker-end="url(#arr)"/>`).join("");
+    const nodes=Object.entries(DIA.nodes).map(([key,n])=>{
+      const st=live?diaNodeState(key):"idle";
+      let badge="";
+      if(live && st==="done" && (key==="q1"||key==="q3") && answers[key]){
+        const m={ANO:"ANO",NE:"NE",automat:"AUTOMAT",prepazka:"PŘEPÁŽKA"};
+        badge=`<span class="dbadge">${m[answers[key]]||answers[key]}</span>`;
+      }
+      const icon=n.kind==="dec"?"🔀":(n.icon||"");
+      return `<div class="dnode ${n.kind} ${st}" style="left:${n.x}px;top:${n.y}px;width:${n.w}px;height:${n.h}px"><span class="dic">${icon}</span><span class="dlbl">${n.label}</span>${badge}</div>`;
+    }).join("");
+    const labels=DIA.labels.map(l=>`<div class="dlabel" style="left:${l.x}px;top:${l.y}px">${l.t}</div>`).join("");
+    return `<div class="diagram-wrap"><div class="diagram" style="width:${DIA.w}px;height:${DIA.h}px">
+      <svg class="dia-svg" width="${DIA.w}" height="${DIA.h}" viewBox="0 0 ${DIA.w} ${DIA.h}">
+        <defs><marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#9aa2ae"/></marker></defs>
+        ${edges}</svg>${nodes}${labels}</div></div>`;
+  }
+
+  /* ---------- letenka ---------- */
+  function boardingPassHTML(center){
+    return `<div class="boarding ${center?'center':''}">
+      <div class="bp-top"><span>✈️ Imaginarium Airlines</span><span>IA-118</span></div>
+      <div class="bp-body">
+        <div class="bp-route">Praha → Vídeň → Paříž</div>
+        <div class="bp-row"><span class="k">Cestující</span><span>TY</span></div>
+        <div class="bp-row"><span class="k">Datum odletu</span><span>sobota 11. 7. 2026</span></div>
+        <div class="bp-row"><span class="k">Terminál</span><span><strong>${scenario.terminal}</strong></span></div>
+        <div class="bp-row"><span class="k">Online odbavení</span><span>${scenario.onlineCheckin?"Ano":"Ne"}</span></div>
+        <div class="bp-row"><span class="k">Zavazadlo</span><span>odbavené v ceně</span></div>
+      </div></div>`;
+  }
+
+  /* ---------- e-maily ---------- */
+  const emails=[
+    { id:"letiste-mail", unread:true, sender:"Letiště Praha", initials:"✈", color:"#038387",
+      subject:"Jak si odbavit zavazadlo ✅", time:"7:30",
+      preview:"Postupuj podle našeho rozhodovacího stromu…",
+      body:`<p>Dobrý den a vítejte na letišti! 👋</p>
+        <p>Při odbavení se řiďte tímto <strong>rozhodovacím stromem</strong>. U každého rozhodnutí 🔀 se vydejte podle odpovědi (ANO/NE). Pozor — jeden krok se může i opakovat, je tam <strong>smyčka</strong> 🔁 (opakuje se, dokud není příruční v pořádku):</p>
+        <div style="background:#f5f6f8;border:1px solid #edebe9;border-radius:10px;padding:12px;margin:12px 0;">${diagramHTML(false)}</div>
+        <p>Celý postup projdeš v aplikaci <strong>Letiště</strong> 🛫. Šťastnou cestu!</p>` },
+    { id:"ticket", unread:true, sender:"Imaginarium Airlines", initials:"✈", color:"#0f6cbd",
+      subject:"Potvrzení rezervace — letenka IA-118 🎫", time:"včera",
+      preview:"Vaše letenka je připravena. Těšíme se na palubě…",
+      body:`<p>Děkujeme za rezervaci! Tady je vaše letenka — najdete ji i v aplikaci <strong>Imaginarium Airlines → Moje letenky</strong>.</p>${boardingPassHTML(false)}` },
+    { id:"mama", unread:false, sender:"Máma", initials:"M", color:"#107c10",
+      subject:"Měj se krásně! 😘", time:"po",
+      preview:"Dávej na sebe pozor a napiš, až dorazíš…",
+      body:`<p>Ahoj, tak už letíš do Paříže! Dávej na sebe pozor, odbav se v klidu podle pokynů letiště a napiš mi, až dorazíš. 😘 Máma</p>` },
+    { id:"marco", unread:false, sender:"Marco", initials:"M", color:"#b4009e",
+      subject:"Těším se! 🤫", time:"po",
+      preview:"Dej vědět, až budeš na letišti…",
+      body:`<p>Ahoj! Super, že už jsi na cestě. Dej mi vědět, až se odbavíš. Čekám na tebe v Paříži! Marco</p>` }
+  ];
+
+  const apps=[
+    {id:"plocha",icon:"🖥️",label:"Plocha"},{id:"posta",icon:"📧",label:"Pošta"},
+    {id:"imaginarium",icon:"✈️",label:"Airlines"},{id:"letiste",icon:"🛫",label:"Letiště"},
+    {id:"napoveda",icon:"💡",label:"Nápověda"}
+  ];
+
+  /* ---------- rail ---------- */
+  function renderRail(){
+    document.getElementById("rail").innerHTML=`<div class="rail-title">Aplikace</div>`+
+      apps.map(a=>{
+        let glow="";
+        if(a.id==="posta" && !mailRead) glow="glow";
+        if(a.id==="letiste" && mailRead && !atEnd()) glow="glow";
+        return `<button class="rail-app ${app===a.id?'active':''} ${glow}" data-app="${a.id}"><span class="ri">${a.icon}</span><span class="rl">${a.label}</span></button>`;
+      }).join("");
+  }
+
+  /* ---------- plocha ---------- */
+  function plochaHTML(){
+    const pg=!mailRead, lg=mailRead&&!atEnd();
+    const posta=`<button class="desk-icon ${pg?'glow':''}" data-app="posta"><span class="di">📧</span><span class="dl">Pošta</span>${pg?'<span class="start-here">Nový e-mail 👆</span>':''}</button>`;
+    const air=`<button class="desk-icon" data-app="imaginarium"><span class="di">✈️</span><span class="dl">Airlines</span></button>`;
+    const let_=`<button class="desk-icon ${lg?'glow':''}" data-app="letiste"><span class="di">🛫</span><span class="dl">Letiště</span>${lg?'<span class="start-here">Odbav se 👆</span>':''}</button>`;
+    const napo=`<button class="desk-icon" data-app="napoveda"><span class="di">💡</span><span class="dl">Nápověda</span></button>`;
+    const deco=["🗑️ Koš","🌐 Prohlížeč"].map(d=>{const[i,...n]=d.split(" ");return `<div class="desk-icon disabled"><span class="di">${i}</span><span class="dl">${n.join(" ")}</span></div>`;}).join("");
+    return `<div class="desktop"><div class="plane-deco">🛫</div><div class="desk-grid">${posta}${air}${let_}${napo}${deco}</div></div>`;
+  }
+
+  /* ---------- mail ---------- */
+  function listHTML(){
+    return emails.map(e=>`
+      <div class="email-row ${e.unread?'unread':''} ${e.id===currentId?'selected':''}" data-mail="${e.id}">
+        <div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="email-main">
+          <div class="email-line1"><span class="email-sender">${e.sender}</span><span class="email-time">${e.time}</span></div>
+          <div class="email-subject">${e.subject}</div><div class="email-preview">${e.preview}</div>
+        </div>
+        <div class="dot ${e.unread?'':'hidden'}"></div></div>`).join("");
+  }
+  function readerHTML(){
+    const e=emails.find(x=>x.id===currentId);
+    return `<div class="subject">${e.subject}</div>
+      <div class="reader-head"><div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="reader-from"><div class="name">${e.sender}</div><div class="meta">komu: mně &nbsp;•&nbsp; dnes ${e.time}</div></div></div>
+      <div class="reader-body">${e.body}</div>`;
+  }
+  function postaHTML(){
+    const unread=emails.filter(e=>e.unread).length;
+    return `<div class="mailapp"><div class="app-title">📧 Pošta <span class="search">🔍&nbsp; Hledat v e-mailech</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="mail-body">
+        <nav class="folders"><button class="compose">✏️&nbsp; Nový e-mail</button>
+          <ul><li class="active">📥 Doručená pošta ${unread?`<span class="cnt">${unread}</span>`:''}</li>
+          <li>📤 Odeslaná pošta</li><li>📄 Koncepty</li><li>🗑️ Koš</li><li>🚫 Nevyžádaná pošta</li></ul></nav>
+        <section class="list"><div class="list-head">Doručená pošta</div>${listHTML()}</section>
+        <section class="reader">${readerHTML()}</section>
+      </div></div>`;
+  }
+
+  /* ---------- airline ---------- */
+  function imaginariumHTML(){
+    return `<div class="appwin"><div class="app-title">✈️ Imaginarium Airlines <span class="search">Moje letenky</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div style="flex:1;overflow:auto;background:#f5f6f8;padding:4px 20px;">${boardingPassHTML(true)}</div></div>`;
+  }
+
+  /* ---------- Letiště ---------- */
+  function bagPanelHTML(){
+    const carry=scenario.carryOn.filter(i=>!(repacked && !i.allowed));
+    return `<div class="bag-panel">
+      <h3>Moje letenka</h3>
+      <div class="bag-card"><div class="bc-title">✈️ Let IA-118</div>
+        <div class="row"><span class="k">Trasa</span><span>Praha → Vídeň → Paříž</span></div>
+        <div class="row"><span class="k">Terminál</span><span><strong>${scenario.terminal}</strong></span></div>
+        <div class="row"><span class="k">Online odbavení</span><span><strong>${scenario.onlineCheckin?"Ano":"Ne"}</strong></span></div></div>
+      <h3>Moje zavazadlo</h3>
+      <div class="bag-card"><div class="bc-title">🧳 Odbavený kufr</div>
+        <div class="row"><span class="k">Váha</span><span><strong>${scenario.bagWeight} kg</strong></span></div>
+        <div class="row"><span class="k">Obsah</span><span>oblečení, boty, dárky</span></div>
+        ${repacked?`<div class="moved">+ přeloženo z příručního: ${forbiddenNames}</div>`:""}</div>
+      <div class="bag-card"><div class="bc-title">🎒 Příruční batoh</div>
+        <div class="chips2">${carry.map(i=>`<span class="chip2">${i.icon} ${i.name}</span>`).join("")}</div></div></div>`;
+  }
+  function repackHTML(){
+    const zoneItems=z=>scenario.carryOn.filter(i=>(placement[i.id]||"pool")===z);
+    const item=i=>`<div class="ritem ${repackWrong.includes(i.id)?'wrong':''}" draggable="true" data-item="${i.id}">
+        <span>${i.icon}</span><span>${i.name}</span>
+        <span class="rbtns"><button data-place="${i.id}:kufr" title="Do kufru">🧳</button><button data-place="${i.id}:prirucni" title="Nechat v příručním">🎒</button></span></div>`;
+    const z=(id,cls,title)=>`<div class="rzone ${cls}" data-bin="${id}"><h4>${title}</h4>${zoneItems(id).map(item).join("")}</div>`;
+    return `<div class="repack">${z("pool","pool","⬇️ Roztřiď")}${z("kufr","kufr","🧳 Do kufru")}${z("prirucni","prirucni","🎒 Nechat")}</div>
+      <div class="ac-actions" style="margin-top:12px"><button class="btn btn-primary" data-repack-done="1">Hotovo, přebaleno</button></div>`;
+  }
+  function wrap(title,q,inner,note){
+    return `<div class="active-card" id="activeCard"><h3>${title}</h3><div class="q">${q}</div>${note?`<div class="ac-note">${note}</div>`:""}${inner}<div id="afb"></div></div>`;
+  }
+  function activeCardHTML(){
+    const step=steps[si];
+    if(step==="terminal")
+      return wrap("Krok: Navigace","Na kterém terminálu odlétáš?",
+        `<div class="ac-actions">${TERMINALS.map(t=>`<button class="btn btn-choice" data-terminal="${t}">${t}</button>`).join("")}</div>`);
+    if(step==="q1")
+      return wrap("🔀 Rozhodnutí","Je tvůj odbavený kufr těžší než 23 kg?",
+        `<div class="ac-actions"><button class="btn btn-choice" data-dec="q1:ANO">ANO</button><button class="btn btn-choice" data-dec="q1:NE">NE</button></div>`);
+    if(step==="a1")
+      return wrap("Krok: Nadváha","Kufr je nad limit — vyřeš nadváhu.",
+        `<div class="ac-actions"><button class="btn btn-primary" data-advance="a1">🎁 Vyndat dárky do příručního</button></div>`);
+    if(step==="q2"||step==="q2b")
+      return wrap("🔀 Rozhodnutí","Je v příručním zavazadle něco, co tam nesmí?",
+        `<div class="ac-actions"><button class="btn btn-choice" data-dec="q2:ANO">ANO</button><button class="btn btn-choice" data-dec="q2:NE">NE</button></div>`);
+    if(step==="a2")
+      return wrap("Krok: Přebalení (smyčka 🔁)","Roztřiď věci z příručního.",
+        repackHTML(), "Přetáhni nebo klikni 🧳 / 🎒. Co nesmí do příručního, dej do kufru. Pak se vrátíš k otázce.");
+    if(step==="q3")
+      return wrap("🔀 Rozhodnutí","Odbavil ses předem online?",
+        `<div class="ac-actions"><button class="btn btn-choice" data-dec="q3:automat">ANO</button><button class="btn btn-choice" data-dec="q3:prepazka">NE</button></div>`);
+    if(step==="leaf"){
+      const auto=answers.q3==="automat";
+      return wrap("Kufr odbaven",`${auto?"🤖 Odbavil ses u samoobslužného automatu.":"🧑‍✈️ Odbavil ses u přepážky s obsluhou."}`,
+        `<div class="ac-actions"><button class="btn btn-primary" data-advance="leaf">Pokračovat →</button></div>`);
+    }
+    if(step==="security")
+      return wrap("Krok: Kontrola","Projdi bezpečnostní kontrolou.",
+        `<div class="ac-actions"><button class="btn btn-primary" data-advance="security">🛡️ Projít kontrolou</button></div>`,
+        "Prázdnou láhev si vezmi s sebou — naplníš ji až za kontrolou.");
+    if(step==="fountain"){
+      if(!bottleFilled)
+        return wrap("Krok: Fontánka","U fontánky si naplň láhev.",
+          `<div class="fountain"><div class="big">🚰</div></div><div class="ac-actions"><button class="btn btn-primary" data-fill="1">💧 Naplnit láhev</button></div>`);
+      return wrap("Krok: Fontánka","Láhev je plná! 💧",
+        `<div class="fountain"><div class="big">🍶</div></div><div class="ac-actions"><button class="btn btn-primary" data-advance="fountain">Pokračovat →</button></div>`);
+    }
+    return `<div class="active-card" id="activeCard"><h3>Hotovo</h3>
+      <div class="q">✅ Zavazadlo je odbavené a jsi připravený!</div>
+      <a class="continue" href="../04-vyber-gate/index.html">Pokračovat na další úkol →</a></div>`;
+  }
+  function letisteHTML(){
+    return `<div class="appwin"><div class="app-title">🛫 Letiště <span class="search">Praha (PRG)</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="letiste-body">${bagPanelHTML()}
+        <div class="work"><div class="dia-col">${diagramHTML(true)}</div><div class="card-col">${activeCardHTML()}</div></div>
+      </div></div>`;
+  }
+
+  /* ---------- nápověda ---------- */
+  const HINTS=[
+    `<b>Nápověda 1</b><p>Postupuj podle <strong>rozhodovacího stromu</strong> — začni nahoře a u každého rozhodnutí 🔀 se vydej podle odpovědi. Jeden krok se může i opakovat (smyčka 🔁).</p>`,
+    `<b>Nápověda 2</b><p>Odpovědi hledej v panelu <strong>Moje zavazadlo</strong> vlevo — váha kufru, obsah příručního batohu i tvoje letenka.</p>`,
+    `<b>Nápověda 3</b><p>Do příručního zavazadla <strong>nesmí tekutiny nad 100 ml</strong> ani <strong>ostré předměty</strong> — ty patří do odbaveného kufru.</p>`
+  ];
+  function napovedaHTML(){
+    const cards=HINTS.slice(0,hintLevel).map(h=>`<div class="hint-card">${h}</div>`).join("");
+    const btn=hintLevel<HINTS.length?`<button class="reveal-btn" id="revealHint">${hintLevel===0?'Zobrazit nápovědu':'Další nápověda'}</button>`:`<p class="all-shown">To je vše. Teď to zkus! 😊</p>`;
+    return `<div class="appwin"><div class="app-title">💡 Nápověda</div>
+      <div class="napoveda"><div class="np-wrap"><p class="np-intro">Nevíš si rady na letišti? Odkrývej nápovědy postupně.</p>${cards}${btn}</div></div></div>`;
+  }
+
+  /* ---------- render ---------- */
+  function renderScreen(){
+    document.getElementById("screen").innerHTML =
+      app==="plocha"?plochaHTML():app==="posta"?postaHTML():app==="imaginarium"?imaginariumHTML():app==="letiste"?letisteHTML():napovedaHTML();
+  }
+  function render(){ renderRail(); renderScreen(); }
+  function openApp(id){
+    if(id==="posta" && !mailRead){ mailRead=true; const m=emails.find(e=>e.id==="letiste-mail"); if(m) m.unread=false; }
+    app=id; render();
+  }
+  function selectEmail(id){ const e=emails.find(x=>x.id===id); if(e&&e.unread) e.unread=false; currentId=id; renderScreen(); }
+  function activeMsg(html,cls){
+    const fb=document.getElementById("afb"); if(fb) fb.innerHTML=`<span class="${cls}">${html}</span>`;
+    const c=document.getElementById("activeCard"); if(c){ c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); }
+  }
+  function advance(){ if(si<steps.length-1) si++; render(); }
+
+  function chooseTerminal(t){ if(t===scenario.terminal){ advance(); } else activeMsg("To není tvůj terminál. Mrkni na letenku v panelu vlevo. 🔁","err"); }
+  function answerDecision(key,val){
+    let correct;
+    if(key==="q1") correct=overweight?"ANO":"NE";
+    if(key==="q2") correct=hasForbiddenNow()?"ANO":"NE";
+    if(key==="q3") correct=scenario.onlineCheckin?"automat":"prepazka";
+    if(val===correct){ if(key!=="q2") answers[key]=val; advance(); }
+    else activeMsg("To neodpovídá tvému zavazadlu. Zkontroluj panel vlevo. 🔁","err");
+  }
+  function placeItem(id,zone){ placement[id]=zone; repackWrong=repackWrong.filter(x=>x!==id); renderScreen(); }
+  function validateRepack(){
+    let unplaced=0; const wrong=[];
+    scenario.carryOn.forEach(i=>{ const p=placement[i.id];
+      if(!p||p==="pool"){ unplaced++; return; }
+      if(p!==(i.allowed?"prirucni":"kufr")) wrong.push(i.id); });
+    if(unplaced>0){ activeMsg(`Ještě jsi netřídil(a) všechny věci (zbývá ${unplaced}). 🎒`,"err"); return; }
+    if(wrong.length>0){ repackWrong=wrong; renderScreen(); activeMsg("Některá věc není na správném místě. 🔁","err"); return; }
+    repackWrong=[]; repacked=true; advance();
+  }
+  function fillBottle(){ bottleFilled=true; renderScreen(); }
+
+  /* ---------- eventy ---------- */
+  document.addEventListener("click", e=>{
+    const railBtn=e.target.closest("[data-app]"); if(railBtn){ openApp(railBtn.dataset.app); return; }
+    const row=e.target.closest("[data-mail]"); if(row){ selectEmail(row.dataset.mail); return; }
+    if(e.target.id==="revealHint"){ if(hintLevel<HINTS.length){hintLevel++; renderScreen();} return; }
+    const term=e.target.closest("[data-terminal]"); if(term){ chooseTerminal(term.dataset.terminal); return; }
+    const dec=e.target.closest("[data-dec]"); if(dec){ const[k,v]=dec.dataset.dec.split(":"); answerDecision(k,v); return; }
+    const place=e.target.closest("[data-place]"); if(place){ const[id,z]=place.dataset.place.split(":"); placeItem(id,z); return; }
+    if(e.target.closest("[data-repack-done]")){ validateRepack(); return; }
+    if(e.target.closest("[data-fill]")){ fillBottle(); return; }
+    const adv=e.target.closest("[data-advance]"); if(adv){ advance(); return; }
+  });
+  document.addEventListener("dragstart", e=>{ const it=e.target.closest("[data-item]"); if(it) e.dataTransfer.setData("text/plain",it.dataset.item); });
+  document.addEventListener("dragover", e=>{ if(e.target.closest("[data-bin]")) e.preventDefault(); });
+  document.addEventListener("drop", e=>{ const bin=e.target.closest("[data-bin]"); if(bin){ e.preventDefault(); const id=e.dataTransfer.getData("text/plain"); if(id) placeItem(id,bin.dataset.bin); } });
+
+  render();
+</script>
+</body>
+</html>

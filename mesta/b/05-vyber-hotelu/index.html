@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Úkol 5 – Výběr hotelu | Malý cestovatel</title>
+<style>
+  :root{
+    --accent:#0f6cbd; --accent-dark:#115ea3;
+    --app-bg:#faf9f8; --border:#edebe9; --border-strong:#e1dfdd;
+    --text:#242424; --text-2:#616161; --unread:#0f6cbd;
+    --sel:#e9f0f8; --sel-strong:#cfe4fa;
+    --ok:#107c10; --err:#d13438; --rail:#223049; --rail-2:#2c3e5e;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    color:var(--text);background:#f3f2f1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+  .game-bar{flex:0 0 auto;height:52px;background:#fff;border-bottom:1px solid var(--border-strong);
+    display:flex;align-items:center;justify-content:space-between;padding:0 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);z-index:5;}
+  .game-bar .brand{font-weight:700;font-size:16px;}
+  .game-bar .brand .plane{margin-right:6px;}
+  .game-bar .task-name{color:var(--text-2);font-size:14px;}
+  .progress-pill{background:var(--accent);color:#fff;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;}
+
+  .os-body{flex:1;display:flex;min-height:0;}
+  .rail{flex:0 0 190px;background:var(--rail);color:#eaeef6;display:flex;flex-direction:column;gap:6px;padding:14px 10px;}
+  .rail .rail-title{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#8ea2c4;padding:4px 10px 10px;}
+  .rail-app{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:none;color:#eaeef6;
+    padding:11px 12px;border-radius:10px;cursor:pointer;font-size:15px;text-align:left;font-family:inherit;}
+  .rail-app:hover{background:var(--rail-2);}
+  .rail-app.active{background:var(--accent);color:#fff;}
+  .rail-app .ri{font-size:20px;width:24px;text-align:center;}
+  .rail-app.glow{box-shadow:0 0 0 0 rgba(255,196,0,.7);animation:glowpulse 1.8s infinite;}
+  @keyframes glowpulse{0%{box-shadow:0 0 0 0 rgba(255,196,0,.75);}70%{box-shadow:0 0 0 12px rgba(255,196,0,0);}100%{box-shadow:0 0 0 0 rgba(255,196,0,0);}}
+
+  .screen{flex:1;min-width:0;position:relative;overflow:hidden;background:#fff;}
+
+  .desktop{height:100%;width:100%;background:linear-gradient(160deg,#9ed0ff 0%,#6aa9e9 45%,#4f8fd6 100%);padding:26px;position:relative;}
+  .desktop .plane-deco{position:absolute;right:40px;top:30px;font-size:54px;transform:rotate(-8deg);opacity:.9;}
+  .desk-grid{display:grid;grid-template-columns:repeat(auto-fill,96px);gap:18px 14px;align-content:start;}
+  .desk-icon{width:96px;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+    gap:7px;padding:8px 4px;border-radius:10px;font-family:inherit;color:#0a2a4d;}
+  .desk-icon .di{width:60px;height:60px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:30px;box-shadow:0 4px 10px rgba(0,0,0,.18);}
+  .desk-icon .dl{font-size:13px;font-weight:600;color:#06264a;background:rgba(255,255,255,.55);padding:1px 7px;border-radius:6px;}
+  .desk-icon:hover:not(.disabled){background:rgba(255,255,255,.22);}
+  .desk-icon.disabled{cursor:default;opacity:.65;}
+  .desk-icon.glow .di{animation:glowpulse 1.8s infinite;}
+  .start-here{margin-top:2px;font-size:11px;font-weight:700;color:#fff;background:#e8820c;padding:3px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+
+  .appwin,.mailapp{display:flex;flex-direction:column;height:100%;}
+  .app-title{flex:0 0 auto;height:46px;background:var(--accent);color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px;font-weight:600;font-size:15px;}
+  .app-title .search{flex:1;max-width:440px;background:rgba(255,255,255,.18);border-radius:4px;padding:7px 12px;font-size:13px;color:#eaf2fb;font-weight:400;}
+  .avatar{flex:0 0 36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;}
+
+  /* mail */
+  .mail-body{flex:1;display:flex;min-height:0;}
+  .folders{flex:0 0 210px;background:var(--app-bg);border-right:1px solid var(--border);padding:12px 8px;overflow-y:auto;}
+  .compose{width:100%;border:1px solid var(--border-strong);background:#fff;color:var(--accent);font-weight:600;font-size:14px;padding:9px 12px;border-radius:6px;cursor:pointer;margin-bottom:12px;text-align:left;font-family:inherit;}
+  .folders ul{list-style:none;margin:0;padding:0;}
+  .folders li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;font-size:14px;color:var(--text);}
+  .folders li .cnt{margin-left:auto;color:var(--text-2);font-size:12px;font-weight:600;}
+  .folders li.active{background:var(--sel-strong);font-weight:600;}
+  .list{flex:0 0 340px;background:#fff;border-right:1px solid var(--border);overflow-y:auto;}
+  .list-head{padding:12px 16px;font-weight:700;font-size:16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;}
+  .email-row{display:flex;gap:12px;padding:12px 16px 12px 12px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid transparent;}
+  .email-row:hover{background:#f5f9fd;}
+  .email-row.selected{background:var(--sel);border-left-color:var(--accent);}
+  .email-row.unread{border-left-color:var(--unread);}
+  .email-main{flex:1;min-width:0;}
+  .email-line1{display:flex;align-items:center;gap:8px;}
+  .email-sender{font-size:14px;}
+  .email-row.unread .email-sender{font-weight:700;}
+  .email-time{margin-left:auto;font-size:12px;color:var(--text-2);white-space:nowrap;}
+  .email-subject{font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .email-row.unread .email-subject{font-weight:600;color:var(--accent-dark);}
+  .email-preview{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dot{flex:0 0 8px;height:8px;border-radius:50%;background:var(--unread);align-self:center;}
+  .dot.hidden{visibility:hidden;}
+  .reader{flex:1;background:#fff;overflow-y:auto;padding:24px 32px;min-width:0;}
+  .reader .subject{font-size:21px;font-weight:600;margin:0 0 14px;}
+  .reader-head{display:flex;gap:12px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .reader-head .avatar{flex:0 0 40px;height:40px;}
+  .reader-from .name{font-weight:600;font-size:14px;}
+  .reader-from .meta{font-size:12px;color:var(--text-2);}
+  .reader-body{font-size:15px;line-height:1.6;max-width:720px;}
+  .reader-body p{margin:0 0 12px;}
+  .req-list{list-style:none;margin:10px 0 14px;padding:14px 18px;background:#eef4fb;border:1px solid #cfe0f3;border-radius:10px;}
+  .req-list li{padding:5px 0;font-size:15px;}
+
+  /* ---- Hotely ---- */
+  .hotel-body{flex:1;display:flex;min-height:0;}
+  .conds{flex:0 0 268px;background:var(--app-bg);border-right:1px solid var(--border);padding:16px;overflow-y:auto;}
+  .conds h3{margin:0 0 6px;font-size:15px;}
+  .cond-row{display:flex;gap:9px;align-items:flex-start;font-size:14px;margin-bottom:11px;line-height:1.35;}
+  .cond-row .ic{width:20px;text-align:center;}
+  .cond-row b{display:block;}
+  .cond-row span{color:var(--text-2);font-size:13px;}
+  .rej-counter{margin-top:8px;padding:10px 12px;background:#fff;border:1px solid var(--border-strong);border-radius:8px;font-size:14px;}
+  .rej-counter b{color:var(--accent-dark);}
+  .conds .tip{margin-top:12px;font-size:13px;color:var(--text-2);}
+
+  .hotel-main{flex:1;overflow:auto;background:#eef1f5;padding:12px;}
+  .citymap{position:relative;margin:0 auto;}
+  .base-svg{position:absolute;left:0;top:0;}
+  .hpin{position:absolute;transform:translate(-50%,-50%);border:none;background:none;cursor:pointer;font-family:inherit;padding:0;z-index:2;}
+  .hpin .tag{display:inline-flex;align-items:center;gap:4px;background:#0f6cbd;color:#fff;font-size:12.5px;font-weight:700;
+    padding:4px 9px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.25);white-space:nowrap;border:2px solid #fff;}
+  .hpin:hover .tag{filter:brightness(1.08);}
+  .hpin.sel .tag{background:#e8820c;box-shadow:0 0 0 3px rgba(232,130,12,.45);}
+  .hpin.rejected .tag{background:#9aa2ae;text-decoration:line-through;}
+  .hpin.rejected::after{content:"✗";position:absolute;right:-8px;top:-8px;background:#d13438;color:#fff;border-radius:50%;width:16px;height:16px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;}
+
+  .hotel-card-area{max-width:860px;margin:14px auto 0;}
+  .hotel-card{background:#fff;border:1px solid var(--border-strong);border-radius:12px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .hotel-card .hc-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .hotel-card h3{margin:0;font-size:18px;}
+  .hotel-card .hc-near{font-size:13px;color:var(--text-2);}
+  .attrs{display:flex;flex-wrap:wrap;gap:8px 22px;margin:12px 0 6px;}
+  .attrs .a{font-size:14px;}
+  .attrs .a .k{color:var(--text-2);}
+  .hc-actions{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{padding:9px 16px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid transparent;font-family:inherit;}
+  .btn-book{background:var(--accent);color:#fff;} .btn-book:hover{background:var(--accent-dark);}
+  .btn-reject{background:#fff;color:var(--err);border-color:#e6b4b5;} .btn-reject:hover{background:#fdeeee;}
+  .btn-ghost{background:#fff;color:var(--text-2);border-color:var(--border-strong);}
+  .reason-box{margin-top:14px;padding:13px 15px;background:#fff7e6;border:1px solid #f0dca0;border-radius:10px;}
+  .reason-box .q{font-size:14px;font-weight:600;margin-bottom:9px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{background:#fff;border:1px solid var(--border-strong);border-radius:999px;padding:8px 13px;cursor:pointer;font-size:13px;font-family:inherit;}
+  .chip:hover{border-color:var(--accent);background:#eef4fb;}
+  .badge-rej{display:inline-block;background:#fdeeee;color:var(--err);border:1px solid #f3c6c7;padding:5px 11px;border-radius:999px;font-size:13px;font-weight:600;}
+  .hc-fb{margin-top:10px;font-size:13.5px;}
+  .hc-fb .err{color:var(--err);font-weight:600;}
+  .hc-fb .warn{color:#8a6d00;font-weight:600;}
+  .hint-pick{max-width:860px;margin:14px auto 0;text-align:center;color:var(--text-2);font-size:14px;background:#fff;border:1px dashed var(--border-strong);border-radius:12px;padding:18px;}
+  .shake{animation:shake .35s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  .booked{max-width:560px;margin:18px auto;text-align:center;background:#fff;border:1px solid #bfe3bf;border-radius:16px;padding:30px;box-shadow:0 6px 24px rgba(0,0,0,.08);}
+  .booked .big{font-size:50px;} .booked h2{margin:10px 0 6px;color:var(--ok);}
+  .continue{display:inline-block;margin-top:16px;background:var(--ok);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:15px;}
+  .continue:hover{background:#0b5e0b;}
+
+  .napoveda{flex:1;overflow-y:auto;padding:28px 32px;background:#fafafa;}
+  .napoveda .np-wrap{max-width:620px;margin:0 auto;}
+  .np-intro{font-size:14px;color:var(--text-2);background:#eef4fb;border:1px solid #cfe0f3;padding:12px 14px;border-radius:8px;margin:0 0 18px;}
+  .hint-card{background:#fff;border:1px solid var(--border-strong);border-left:4px solid #e8a30c;border-radius:8px;padding:14px 16px;margin-bottom:14px;}
+  .hint-card b{display:block;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:#b8790a;margin-bottom:6px;}
+  .hint-card p{margin:0;font-size:15px;line-height:1.55;}
+  .reveal-btn{background:#e8820c;color:#fff;border:none;padding:11px 20px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .reveal-btn:hover{background:#cf7109;}
+  .all-shown{font-size:13px;color:var(--text-2);}
+
+  @media (max-width:1050px){ .folders{display:none;} }
+  @media (max-width:1150px){ .hotel-body{flex-direction:column;} .conds{flex:0 0 auto;border-right:none;border-bottom:1px solid var(--border);} }
+  @media (max-width:860px){
+    .rail{flex:0 0 64px;} .rail .rail-title,.rail-app .rl{display:none;} .rail-app{justify-content:center;}
+    .mail-body{flex-direction:column;}
+    .list{flex:0 0 auto;max-height:34vh;border-right:none;border-bottom:1px solid var(--border);}
+  }
+</style>
+</head>
+<body>
+
+  <div class="game-bar">
+    <div class="brand"><span class="plane">✈️</span>Malý cestovatel</div>
+    <div class="task-name">Úkol 5 — Vyber hotel podle požadavků</div>
+    <div class="progress-pill">Úkol 5&nbsp;/&nbsp;7</div>
+  </div>
+
+  <div class="os-body">
+    <nav class="rail" id="rail"></nav>
+    <main class="screen" id="screen"></main>
+  </div>
+
+<script>
+  /* ---------- mapa Paříž (podklad, zjednodušené metro) ---------- */
+  const LINES={
+    M1:{color:"#f2c200", stations:["ladefense","etoile","argentine","champs","concorde","louvre","palaisroyal","chatelet","hoteldeville","bastille","garedelyon","nation","vincennes"]},
+    M4:{color:"#b5177e", stations:["clignancourt","chateaurouge","garedunord","garedelest","strasbourg","reaumur","chatelet","cite","saintmichel","odeon","montparnasse","denfert","orleans"]},
+    M6:{color:"#73c295", stations:["etoile","trocadero","passy","birhakeim","dupleix","sevres","montparnasse","placeditalie","nation"]},
+    M7:{color:"#f59fb4", stations:["stalingrad","garedelest","poissonniere","chaussee","opera","pontneuf","jussieu","placemonge","placeditalie","portedivry"]},
+    M14:{color:"#682c92", stations:["saintlazare","madeleine","pyramides","chatelet","garedelyon","bercy","olympiades","orly"]}
+  };
+  const ST={
+    ladefense:{x:45,y:235}, etoile:{x:120,y:255}, argentine:{x:158,y:265}, champs:{x:198,y:274}, concorde:{x:285,y:288}, louvre:{x:338,y:298}, palaisroyal:{x:362,y:299}, chatelet:{x:385,y:300},
+    hoteldeville:{x:425,y:305}, bastille:{x:478,y:312}, garedelyon:{x:528,y:330}, nation:{x:605,y:300}, vincennes:{x:685,y:285},
+    clignancourt:{x:360,y:40}, chateaurouge:{x:363,y:64}, garedunord:{x:368,y:90}, garedelest:{x:395,y:132}, strasbourg:{x:382,y:200}, reaumur:{x:382,y:250}, cite:{x:382,y:335}, saintmichel:{x:378,y:368},
+    odeon:{x:372,y:400}, montparnasse:{x:340,y:452}, denfert:{x:345,y:505}, orleans:{x:350,y:558},
+    trocadero:{x:108,y:325}, passy:{x:118,y:357}, birhakeim:{x:138,y:390}, dupleix:{x:205,y:435}, sevres:{x:272,y:447}, placeditalie:{x:452,y:487},
+    stalingrad:{x:432,y:68}, poissonniere:{x:435,y:176}, chaussee:{x:430,y:205}, opera:{x:425,y:233}, pontneuf:{x:415,y:286}, jussieu:{x:432,y:352}, placemonge:{x:448,y:402}, portedivry:{x:470,y:548},
+    saintlazare:{x:300,y:158}, madeleine:{x:312,y:228}, pyramides:{x:350,y:272}, bercy:{x:565,y:372}, olympiades:{x:528,y:432}, orly:{x:495,y:535}
+  };
+  function isInter(id){ return Object.keys(LINES).filter(L=>LINES[L].stations.includes(id)).length>1; }
+
+  /* ---------- požadavky (z e-mailu) ---------- */
+  const REQS=[
+    {id:"cena",   ic:"💰", title:"Cena",      val:"nejvýše 2 500 Kč / noc",  rej:"💰 Moc drahý (nad 2 500 Kč)"},
+    {id:"hvezdy", ic:"⭐", title:"Hodnocení", val:"alespoň 4 hvězdičky",      rej:"⭐ Málo hvězdiček (pod 4)"},
+    {id:"snidane",ic:"🍳", title:"Snídaně",   val:"v ceně",                   rej:"🍳 Bez snídaně"},
+    {id:"metro",  ic:"🚇", title:"Poloha",    val:"blízko metra (do 300 m)",  rej:"🚇 Daleko od metra"},
+    {id:"volno",  ic:"📅", title:"Termín",    val:"volno 11.–14. 7.",         rej:"📅 Nemá volno v termínu"}
+  ];
+
+  /* violation = porušený požadavek (null = vyhovuje všem). Vítěz je u stanice Bir-Hakeim. */
+  const hotels=[
+    {id:"bella",  name:"Hotel Bella Paris",  x:138,y:362, near:"Bir-Hakeim",     price:"2 300", stars:4, snidane:true,  metro:"u stanice Bir-Hakeim (150 m)",     volno:true,  violation:null},
+    {id:"louvre", name:"Grand Hotel Louvre", x:366,y:276, near:"Louvre",         price:"3 200", stars:4, snidane:true,  metro:"u stanice Louvre (200 m)",         volno:true,  violation:"cena"},
+    {id:"opera",  name:"Hotel Opéra",        x:452,y:212, near:"Opéra",          price:"2 400", stars:3, snidane:true,  metro:"u stanice Opéra (180 m)",          volno:true,  violation:"hvezdy"},
+    {id:"nation", name:"Hotel Nation",       x:614,y:280, near:"Nation",         price:"2 200", stars:4, snidane:false, metro:"u stanice Nation (250 m)",         volno:true,  violation:"snidane"},
+    {id:"seine",  name:"Villa Seine",        x:185,y:150, near:"—",              price:"2 350", stars:4, snidane:true,  metro:"daleko od metra (600 m)",          volno:true,  violation:"metro"},
+    {id:"italie", name:"Hotel Italie",       x:472,y:467, near:"Place d'Italie", price:"2 450", stars:5, snidane:true,  metro:"u stanice Place d'Italie (220 m)", volno:false, violation:"volno"}
+  ];
+  const HOTEL_NAME="Hotel Bella Paris";
+
+  /* ---------- stav ---------- */
+  let app="plocha";
+  let currentId="mama";
+  let mailRead=false;
+  let hintLevel=0;
+  let selected=null;      // id vybraného hotelu
+  let showReason=false;   // zobrazit důvody vyřazení u vybraného
+  let booked=false;
+  const rejectedCount=()=>hotels.filter(h=>h.rejected).length;
+
+  /* ---------- e-maily ---------- */
+  const emails=[
+    { id:"mama", unread:true, sender:"Máma", initials:"M", color:"#107c10",
+      subject:"Požadavky na hotel 🏨", time:"9:10",
+      preview:"Vyber nám v Paříži hotel podle těchto podmínek…",
+      body:`<p>Ahoj cestovateli! 👋</p>
+        <p>Vyber nám v Paříži hotel, který splňuje <strong>všechny</strong> tyto požadavky:</p>
+        <ul class="req-list">
+          <li>💰 <strong>Cena:</strong> nejvýše 2 500 Kč za noc</li>
+          <li>⭐ <strong>Hodnocení:</strong> alespoň 4 hvězdičky</li>
+          <li>🍳 <strong>Snídaně:</strong> v ceně</li>
+          <li>🚇 <strong>Poloha:</strong> blízko metra (do 300 m od stanice)</li>
+          <li>📅 <strong>Termín:</strong> volno od 11. do 14. 7.</li>
+        </ul>
+        <p>Hotely najdeš na mapě v aplikaci <strong>Hotely</strong> 🏨. Klikni na hotel a porovnej ho s požadavky.</p>
+        <p>Díky! 😘 Máma</p>` },
+    { id:"marco", unread:false, sender:"Marco", initials:"M", color:"#b4009e",
+      subject:"Kde budeš bydlet? 🏨", time:"po",
+      preview:"Dej vědět, až si vyberete hotel…",
+      body:`<p>Ahoj! Až si vyberete hotel, dej mi vědět kde, ať vím, kam pro tebe dojít. Marco</p>` }
+  ];
+
+  const apps=[
+    {id:"plocha",icon:"🖥️",label:"Plocha"},{id:"posta",icon:"📧",label:"Pošta"},
+    {id:"hotely",icon:"🏨",label:"Hotely"},{id:"napoveda",icon:"💡",label:"Nápověda"}
+  ];
+
+  /* ---------- rail ---------- */
+  function renderRail(){
+    document.getElementById("rail").innerHTML=`<div class="rail-title">Aplikace</div>`+
+      apps.map(a=>{ let glow="";
+        if(a.id==="posta" && !mailRead) glow="glow";
+        if(a.id==="hotely" && mailRead && !booked) glow="glow";
+        return `<button class="rail-app ${app===a.id?'active':''} ${glow}" data-app="${a.id}"><span class="ri">${a.icon}</span><span class="rl">${a.label}</span></button>`;
+      }).join("");
+  }
+
+  /* ---------- plocha ---------- */
+  function plochaHTML(){
+    const pg=!mailRead, hg=mailRead&&!booked;
+    const posta=`<button class="desk-icon ${pg?'glow':''}" data-app="posta"><span class="di">📧</span><span class="dl">Pošta</span>${pg?'<span class="start-here">Nový e-mail 👆</span>':''}</button>`;
+    const hotely=`<button class="desk-icon ${hg?'glow':''}" data-app="hotely"><span class="di">🏨</span><span class="dl">Hotely</span>${hg?'<span class="start-here">Vyber hotel 👆</span>':''}</button>`;
+    const napo=`<button class="desk-icon" data-app="napoveda"><span class="di">💡</span><span class="dl">Nápověda</span></button>`;
+    const deco=["🗑️ Koš","🌐 Prohlížeč"].map(d=>{const[i,...n]=d.split(" ");return `<div class="desk-icon disabled"><span class="di">${i}</span><span class="dl">${n.join(" ")}</span></div>`;}).join("");
+    return `<div class="desktop"><div class="plane-deco">🏨</div><div class="desk-grid">${posta}${hotely}${napo}${deco}</div></div>`;
+  }
+
+  /* ---------- mail ---------- */
+  function listHTML(){
+    return emails.map(e=>`
+      <div class="email-row ${e.unread?'unread':''} ${e.id===currentId?'selected':''}" data-mail="${e.id}">
+        <div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="email-main">
+          <div class="email-line1"><span class="email-sender">${e.sender}</span><span class="email-time">${e.time}</span></div>
+          <div class="email-subject">${e.subject}</div><div class="email-preview">${e.preview}</div>
+        </div><div class="dot ${e.unread?'':'hidden'}"></div></div>`).join("");
+  }
+  function readerHTML(){
+    const e=emails.find(x=>x.id===currentId);
+    return `<div class="subject">${e.subject}</div>
+      <div class="reader-head"><div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="reader-from"><div class="name">${e.sender}</div><div class="meta">komu: mně &nbsp;•&nbsp; dnes ${e.time}</div></div></div>
+      <div class="reader-body">${e.body}</div>`;
+  }
+  function postaHTML(){
+    const unread=emails.filter(e=>e.unread).length;
+    return `<div class="mailapp"><div class="app-title">📧 Pošta <span class="search">🔍&nbsp; Hledat v e-mailech</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="mail-body">
+        <nav class="folders"><button class="compose">✏️&nbsp; Nový e-mail</button>
+          <ul><li class="active">📥 Doručená pošta ${unread?`<span class="cnt">${unread}</span>`:''}</li>
+          <li>📤 Odeslaná pošta</li><li>📄 Koncepty</li><li>🗑️ Koš</li><li>🚫 Nevyžádaná pošta</li></ul></nav>
+        <section class="list"><div class="list-head">Doručená pošta</div>${listHTML()}</section>
+        <section class="reader">${readerHTML()}</section>
+      </div></div>`;
+  }
+
+  /* ---------- Hotely (mapa) ---------- */
+  function baseSVG(){
+    const W=770,H=600;
+    let lines="";
+    for(const L in LINES){ const pts=LINES[L].stations.map(id=>`${ST[id].x},${ST[id].y}`).join(" ");
+      lines+=`<polyline points="${pts}" fill="none" stroke="${LINES[L].color}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.32"/>`; }
+    let dots="";
+    for(const id in ST){ const s=ST[id]; dots+=`<circle cx="${s.x}" cy="${s.y}" r="${isInter(id)?4:3}" fill="#fff" stroke="#9aa2ae" stroke-width="1.6"/>`; }
+    return `<svg class="base-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${lines}${dots}</svg>`;
+  }
+  function pinsHTML(){
+    return hotels.map(h=>`<button class="hpin ${h.rejected?'rejected':''} ${selected===h.id?'sel':''}" style="left:${h.x}px;top:${h.y}px" data-hotel="${h.id}" title="${h.name}">
+        <span class="tag">🏨 ${h.price} Kč</span></button>`).join("");
+  }
+  function condsHTML(){
+    const c=r=>`<div class="cond-row"><span class="ic">${r.ic}</span><div><b>${r.title}</b><span>${r.val}</span></div></div>`;
+    return `<div class="conds">
+      <h3>Požadavky na hotel</h3>
+      ${REQS.map(c).join("")}
+      <div class="rej-counter">Vyřazeno nevhodných hotelů: <b>${rejectedCount()} / 5</b></div>
+      <div class="tip">Klikni na hotel na mapě 🏨, porovnej ho s požadavky a nevhodné vyřaď. Zbyde ti jeden — ten rezervuj. ✅</div>
+    </div>`;
+  }
+  function hotelCardHTML(){
+    if(!selected) return `<div class="hint-pick">Klikni na některý hotel 🏨 na mapě.</div>`;
+    const h=hotels.find(x=>x.id===selected);
+    if(h.rejected){
+      const rl=(REQS.find(r=>r.id===h.violation)||{}).rej||"";
+      return `<div class="hotel-card" id="hcard">
+        <div class="hc-head"><h3>${h.name}</h3><span class="hc-near">${h.near!=="—"?"u stanice "+h.near:"daleko od metra"}</span></div>
+        <div style="margin-top:12px"><span class="badge-rej">❌ Vyřazeno — ${rl}</span></div></div>`;
+    }
+    const chips = showReason
+      ? `<div class="reason-box"><div class="q">Který požadavek tenhle hotel nesplňuje?</div>
+          <div class="chips">${REQS.map(r=>`<button class="chip" data-rej="${h.id}|${r.id}">${r.rej}</button>`).join("")}
+            <button class="chip btn-ghost" data-rejcancel="1">Zpět</button></div></div>`
+      : `<div class="hc-actions"><button class="btn btn-book" data-book="${h.id}">✅ Rezervovat</button>
+          <button class="btn btn-reject" data-reason="${h.id}">❌ Vyřadit</button></div>`;
+    return `<div class="hotel-card" id="hcard">
+      <div class="hc-head"><h3>${h.name}</h3><span class="hc-near">${h.near!=="—"?"u stanice "+h.near:"daleko od metra"}</span></div>
+      <div class="attrs">
+        <span class="a"><span class="k">💰 Cena:</span> <strong>${h.price} Kč</strong>/noc</span>
+        <span class="a"><span class="k">⭐ Hodnocení:</span> <strong>${h.stars} ★</strong></span>
+        <span class="a"><span class="k">🍳 Snídaně:</span> <strong>${h.snidane?"Ano":"Ne"}</strong></span>
+        <span class="a"><span class="k">🚇 Metro:</span> <strong>${h.metro}</strong></span>
+        <span class="a"><span class="k">📅 Volno 11.–14.&nbsp;7.:</span> <strong>${h.volno?"Ano":"Ne"}</strong></span>
+      </div>
+      ${chips}
+      <div class="hc-fb" id="hfb"></div>
+    </div>`;
+  }
+  function hotelyHTML(){
+    if(booked){
+      return `<div class="appwin"><div class="app-title">🏨 Hotely <span class="search">Paříž</span>
+          <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+        <div style="flex:1;overflow:auto;background:#eef1f5">
+          <div class="booked"><div class="big">🏨✅</div><h2>Hotel rezervován!</h2>
+            <p>Rezervoval(a) jsi <strong>${HOTEL_NAME}</strong> u stanice <strong>Bir-Hakeim</strong>.</p>
+            <a class="continue" href="../06-trasa-metra/index.html">Pokračovat na další úkol →</a></div></div></div>`;
+    }
+    return `<div class="appwin"><div class="app-title">🏨 Hotely <span class="search">Mapa — Paříž</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="hotel-body">${condsHTML()}
+        <section class="hotel-main">
+          <div class="citymap" style="width:770px;height:600px">${baseSVG()}${pinsHTML()}</div>
+          <div class="hotel-card-area">${hotelCardHTML()}</div>
+        </section>
+      </div></div>`;
+  }
+
+  /* ---------- nápověda ---------- */
+  const HINTS=[
+    `<b>Nápověda 1</b><p>Správný hotel musí splňovat <strong>všechny</strong> požadavky najednou — stačí jeden porušený a hotel je ze hry.</p>`,
+    `<b>Nápověda 2</b><p>Klikni na hotel na mapě a projdi jeho údaje: <strong>cenu, hvězdičky, snídani, vzdálenost od metra i volný termín</strong>. Pak vyber, který požadavek porušuje.</p>`,
+    `<b>Nápověda 3</b><p>„Blízko metra“ poznáš i z mapy — hotel daleko od linek a stanic je moc daleko. 🚇</p>`
+  ];
+  function napovedaHTML(){
+    const cards=HINTS.slice(0,hintLevel).map(h=>`<div class="hint-card">${h}</div>`).join("");
+    const btn=hintLevel<HINTS.length?`<button class="reveal-btn" id="revealHint">${hintLevel===0?'Zobrazit nápovědu':'Další nápověda'}</button>`:`<p class="all-shown">To je vše. Teď to zkus! 😊</p>`;
+    return `<div class="appwin"><div class="app-title">💡 Nápověda</div>
+      <div class="napoveda"><div class="np-wrap"><p class="np-intro">Nevíš si rady s výběrem hotelu? Odkrývej nápovědy postupně.</p>${cards}${btn}</div></div></div>`;
+  }
+
+  /* ---------- render ---------- */
+  function renderScreen(){
+    document.getElementById("screen").innerHTML =
+      app==="plocha"?plochaHTML():app==="posta"?postaHTML():app==="hotely"?hotelyHTML():napovedaHTML();
+  }
+  function render(){ renderRail(); renderScreen(); }
+  function openApp(id){
+    if(id==="posta" && !mailRead){ mailRead=true; const m=emails.find(e=>e.id==="mama"); if(m) m.unread=false; }
+    app=id; render();
+  }
+  function selectEmail(id){ const e=emails.find(x=>x.id===id); if(e&&e.unread) e.unread=false; currentId=id; renderScreen(); }
+  function cardMsg(html,cls){
+    const fb=document.getElementById("hfb"); if(fb) fb.innerHTML=`<span class="${cls}">${html}</span>`;
+    const c=document.getElementById("hcard"); if(c){ c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); }
+  }
+  function selectHotel(id){ selected=id; showReason=false; renderScreen(); }
+  function rejectHotel(hid,rid){
+    const h=hotels.find(x=>x.id===hid); if(!h) return;
+    if(h.violation===null){ cardMsg("Počkej — tenhle hotel splňuje všechny požadavky. Ten nevyřazuj! 🤔","warn"); return; }
+    if(rid===h.violation){ h.rejected=true; showReason=false; render(); }
+    else{ cardMsg("Tohle není ten důvod — tenhle požadavek hotel splňuje. Zkus jiný. 🔁","err"); }
+  }
+  function bookHotel(hid){
+    const h=hotels.find(x=>x.id===hid); if(!h) return;
+    if(h.violation!==null){ cardMsg("Tenhle hotel nesplňuje všechny požadavky. Nejdřív ho vyřaď (vyber, co porušuje). ❌","err"); return; }
+    if(rejectedCount()<5){ cardMsg(`Nejdřív vyřaď všechny nevhodné hotely. (Vyřazeno ${rejectedCount()}/5) 🔎`,"warn"); return; }
+    booked=true; render();
+  }
+
+  /* ---------- eventy ---------- */
+  document.addEventListener("click", e=>{
+    const railBtn=e.target.closest("[data-app]"); if(railBtn){ openApp(railBtn.dataset.app); return; }
+    const row=e.target.closest("[data-mail]"); if(row){ selectEmail(row.dataset.mail); return; }
+    if(e.target.id==="revealHint"){ if(hintLevel<HINTS.length){hintLevel++; renderScreen();} return; }
+    const pin=e.target.closest("[data-hotel]"); if(pin){ selectHotel(pin.dataset.hotel); return; }
+    const rsn=e.target.closest("[data-reason]"); if(rsn){ showReason=true; renderScreen(); return; }
+    if(e.target.closest("[data-rejcancel]")){ showReason=false; renderScreen(); return; }
+    const rej=e.target.closest("[data-rej]"); if(rej){ const[hid,rid]=rej.dataset.rej.split("|"); rejectHotel(hid,rid); return; }
+    const bk=e.target.closest("[data-book]"); if(bk){ bookHotel(bk.dataset.book); return; }
+  });
+
+  render();
+</script>
+</body>
+</html>

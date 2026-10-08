@@ -57,12 +57,14 @@
   .jump{background:#fff;border-radius:18px;padding:24px;max-width:520px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);}
   .jump h3{margin:0 0 4px;font-size:19px;}
   .jump .sub{margin:0 0 16px;color:var(--text-2);font-size:13.5px;}
-  .jump-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;}
-  .jump-grid a{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--text);
-    background:#f3f7fc;border:1px solid var(--border);border-radius:10px;padding:10px 11px;font-size:13.5px;font-weight:600;}
-  .jump-grid a:hover{border-color:var(--accent);background:#eaf2fb;}
-  .jump-grid a .jn{flex:0 0 24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;
-    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+  .jcity{margin-bottom:14px;}
+  .jcity h4{margin:0 0 8px;font-size:13px;color:var(--text-2);text-transform:uppercase;letter-spacing:.4px;}
+  .jlevels{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+  .jlevels a{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--text);
+    background:#f3f7fc;border:1px solid var(--border);border-radius:10px;padding:9px 11px;font-size:13px;font-weight:600;}
+  .jlevels a:hover{border-color:var(--accent);background:#eaf2fb;}
+  .jlevels a .jn{flex:0 0 22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
   .jump .close{margin-top:16px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;
     padding:11px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
   .jump .close:hover{background:var(--accent-dark);}
@@ -76,7 +78,7 @@
       <div class="plane">✈️</div>
       <h1>Malý cestovatel</h1>
       <p>Vydej se na cestu a cestou vyřeš <strong>7 úkolů z informatiky</strong>. Každý splněný úkol tě posune o kus dál.</p>
-      <a class="start" href="ukoly/01-sifra-mesto/index.html">Začít dobrodružství</a>
+      <a class="start" id="startBtn" href="#">Začít dobrodružství</a>
       <div class="tagline">Projdeš: šifry · podmínky · rozhodovací strom · čas · mapy · plánování</div>
     </header>
 
@@ -87,25 +89,34 @@
   <div class="overlay" id="overlay" hidden>
     <div class="jump">
       <h3>🔑 Pokračovat od úkolu</h3>
-      <p class="sub">Vracíš se k rozpracované cestě? Skoč rovnou na úkol, kde jsi skončil(a).</p>
-      <div class="jump-grid" id="jumpGrid"></div>
+      <p class="sub">Vracíš se k rozpracované cestě? Vyber své město a úkol, kde jsi skončil(a).</p>
+      <div id="jumpCities"></div>
       <button class="close" id="closeBtn">Zavřít</button>
     </div>
   </div>
 
 <script>
+  // Města (připraveno na další) — v nabídce jen jako A, B, … ať neprozradí cíl cesty.
+  const CITIES=[{id:"a",label:"Město A"},{id:"b",label:"Město B"}];
   const TASKS=[
-    {n:1, ic:"🔐", title:"Tajné město",        sub:"Caesarova šifra",      path:"ukoly/01-sifra-mesto/index.html"},
-    {n:2, ic:"🎫", title:"Výběr letenky",       sub:"podle podmínek",       path:"ukoly/02-vyber-letenky/index.html"},
-    {n:3, ic:"🧳", title:"Odbavení zavazadla",  sub:"rozhodovací strom",    path:"ukoly/03-odbaveni-kufru/index.html"},
-    {n:4, ic:"🛫", title:"Stihni nástup",       sub:"brána a čas",          path:"ukoly/04-vyber-gate/index.html"},
-    {n:5, ic:"🏨", title:"Výběr hotelu",        sub:"podle požadavků",      path:"ukoly/05-vyber-hotelu/index.html"},
-    {n:6, ic:"🚇", title:"Trasa metrem",        sub:"nejkratší cesta",      path:"ukoly/06-trasa-metra/index.html"},
-    {n:7, ic:"🗺️", title:"Plán dne",            sub:"podle počasí",         path:"ukoly/07-plan-vyletu/index.html"}
+    {n:1, ic:"🔐", title:"Tajné město",        slug:"01-sifra-mesto"},
+    {n:2, ic:"🎫", title:"Výběr letenky",       slug:"02-vyber-letenky"},
+    {n:3, ic:"🧳", title:"Odbavení zavazadla",  slug:"03-odbaveni-kufru"},
+    {n:4, ic:"🛫", title:"Stihni nástup",       slug:"04-vyber-gate"},
+    {n:5, ic:"🏨", title:"Výběr hotelu",        slug:"05-vyber-hotelu"},
+    {n:6, ic:"🚇", title:"Trasa metrem",        slug:"06-trasa-metra"},
+    {n:7, ic:"🗺️", title:"Plán dne",            slug:"07-plan-vyletu"}
   ];
+  const url=(city,slug)=>`mesta/${city}/${slug}/index.html`;
 
-  document.getElementById("jumpGrid").innerHTML = TASKS.map(t=>`
-    <a href="${t.path}"><span class="jn">${t.n}</span>${t.ic} ${t.title}</a>`).join("");
+  // Start: náhodně vybrané město
+  const startCity = CITIES[Math.floor(Math.random()*CITIES.length)].id;
+  document.getElementById("startBtn").setAttribute("href", url(startCity, TASKS[0].slug));
+
+  document.getElementById("jumpCities").innerHTML = CITIES.map(c=>`
+    <div class="jcity"><h4>${c.label}</h4><div class="jlevels">${
+      TASKS.map(t=>`<a href="${url(c.id,t.slug)}" title="${t.title}"><span class="jn">${t.n}</span>${t.ic} ${t.title}</a>`).join("")
+    }</div></div>`).join("");
 
   const overlay=document.getElementById("overlay");
   document.getElementById("secretBtn").addEventListener("click",()=>overlay.hidden=false);

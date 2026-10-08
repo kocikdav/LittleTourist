@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Úkol 6 – Cesta metrem | Malý cestovatel</title>
+<style>
+  :root{
+    --accent:#0f6cbd; --accent-dark:#115ea3;
+    --app-bg:#faf9f8; --border:#edebe9; --border-strong:#e1dfdd;
+    --text:#242424; --text-2:#616161; --unread:#0f6cbd;
+    --sel:#e9f0f8; --sel-strong:#cfe4fa;
+    --ok:#107c10; --err:#d13438; --rail:#223049; --rail-2:#2c3e5e;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    color:var(--text);background:#f3f2f1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+  .game-bar{flex:0 0 auto;height:52px;background:#fff;border-bottom:1px solid var(--border-strong);
+    display:flex;align-items:center;justify-content:space-between;padding:0 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);z-index:5;}
+  .game-bar .brand{font-weight:700;font-size:16px;}
+  .game-bar .brand .plane{margin-right:6px;}
+  .game-bar .task-name{color:var(--text-2);font-size:14px;}
+  .progress-pill{background:var(--accent);color:#fff;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;}
+
+  .os-body{flex:1;display:flex;min-height:0;}
+  .rail{flex:0 0 190px;background:var(--rail);color:#eaeef6;display:flex;flex-direction:column;gap:6px;padding:14px 10px;}
+  .rail .rail-title{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#8ea2c4;padding:4px 10px 10px;}
+  .rail-app{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:none;color:#eaeef6;
+    padding:11px 12px;border-radius:10px;cursor:pointer;font-size:15px;text-align:left;font-family:inherit;}
+  .rail-app:hover{background:var(--rail-2);}
+  .rail-app.active{background:var(--accent);color:#fff;}
+  .rail-app .ri{font-size:20px;width:24px;text-align:center;}
+  .rail-app.glow{box-shadow:0 0 0 0 rgba(255,196,0,.7);animation:glowpulse 1.8s infinite;}
+  @keyframes glowpulse{0%{box-shadow:0 0 0 0 rgba(255,196,0,.75);}70%{box-shadow:0 0 0 12px rgba(255,196,0,0);}100%{box-shadow:0 0 0 0 rgba(255,196,0,0);}}
+
+  .screen{flex:1;min-width:0;position:relative;overflow:hidden;background:#fff;}
+
+  .desktop{height:100%;width:100%;background:linear-gradient(160deg,#9ed0ff 0%,#6aa9e9 45%,#4f8fd6 100%);padding:26px;position:relative;}
+  .desktop .plane-deco{position:absolute;right:40px;top:30px;font-size:54px;transform:rotate(-8deg);opacity:.9;}
+  .desk-grid{display:grid;grid-template-columns:repeat(auto-fill,96px);gap:18px 14px;align-content:start;}
+  .desk-icon{width:96px;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+    gap:7px;padding:8px 4px;border-radius:10px;font-family:inherit;color:#0a2a4d;}
+  .desk-icon .di{width:60px;height:60px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:30px;box-shadow:0 4px 10px rgba(0,0,0,.18);}
+  .desk-icon .dl{font-size:13px;font-weight:600;color:#06264a;background:rgba(255,255,255,.55);padding:1px 7px;border-radius:6px;}
+  .desk-icon:hover:not(.disabled){background:rgba(255,255,255,.22);}
+  .desk-icon.disabled{cursor:default;opacity:.65;}
+  .desk-icon.glow .di{animation:glowpulse 1.8s infinite;}
+  .start-here{margin-top:2px;font-size:11px;font-weight:700;color:#fff;background:#e8820c;padding:3px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+
+  .appwin,.mailapp{display:flex;flex-direction:column;height:100%;}
+  .app-title{flex:0 0 auto;height:46px;background:var(--accent);color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px;font-weight:600;font-size:15px;}
+  .app-title .search{flex:1;max-width:440px;background:rgba(255,255,255,.18);border-radius:4px;padding:7px 12px;font-size:13px;color:#eaf2fb;font-weight:400;}
+  .avatar{flex:0 0 36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;}
+
+  /* mail */
+  .mail-body{flex:1;display:flex;min-height:0;}
+  .folders{flex:0 0 210px;background:var(--app-bg);border-right:1px solid var(--border);padding:12px 8px;overflow-y:auto;}
+  .compose{width:100%;border:1px solid var(--border-strong);background:#fff;color:var(--accent);font-weight:600;font-size:14px;padding:9px 12px;border-radius:6px;cursor:pointer;margin-bottom:12px;text-align:left;font-family:inherit;}
+  .folders ul{list-style:none;margin:0;padding:0;}
+  .folders li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;font-size:14px;color:var(--text);}
+  .folders li .cnt{margin-left:auto;color:var(--text-2);font-size:12px;font-weight:600;}
+  .folders li.active{background:var(--sel-strong);font-weight:600;}
+  .list{flex:0 0 340px;background:#fff;border-right:1px solid var(--border);overflow-y:auto;}
+  .list-head{padding:12px 16px;font-weight:700;font-size:16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;}
+  .email-row{display:flex;gap:12px;padding:12px 16px 12px 12px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid transparent;}
+  .email-row:hover{background:#f5f9fd;}
+  .email-row.selected{background:var(--sel);border-left-color:var(--accent);}
+  .email-row.unread{border-left-color:var(--unread);}
+  .email-main{flex:1;min-width:0;}
+  .email-line1{display:flex;align-items:center;gap:8px;}
+  .email-sender{font-size:14px;}
+  .email-row.unread .email-sender{font-weight:700;}
+  .email-time{margin-left:auto;font-size:12px;color:var(--text-2);white-space:nowrap;}
+  .email-subject{font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .email-row.unread .email-subject{font-weight:600;color:var(--accent-dark);}
+  .email-preview{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dot{flex:0 0 8px;height:8px;border-radius:50%;background:var(--unread);align-self:center;}
+  .dot.hidden{visibility:hidden;}
+  .reader{flex:1;background:#fff;overflow-y:auto;padding:24px 32px;min-width:0;}
+  .reader .subject{font-size:21px;font-weight:600;margin:0 0 14px;}
+  .reader-head{display:flex;gap:12px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .reader-head .avatar{flex:0 0 40px;height:40px;}
+  .reader-from .name{font-weight:600;font-size:14px;}
+  .reader-from .meta{font-size:12px;color:var(--text-2);}
+  .reader-body{font-size:15px;line-height:1.6;max-width:720px;}
+  .reader-body p{margin:0 0 12px;}
+  .resv{max-width:430px;margin:16px 0;background:#fff;border:1px solid var(--border-strong);border-radius:14px;overflow:hidden;box-shadow:0 5px 18px rgba(0,0,0,.07);}
+  .resv-top{background:#6a3fb5;color:#fff;padding:13px 18px;font-weight:700;}
+  .resv-body{padding:14px 18px;}
+  .resv-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border);font-size:14px;}
+  .resv-row:last-child{border-bottom:none;}
+  .resv-row .k{color:var(--text-2);}
+
+  /* ---- Metro ---- */
+  .metro-body{flex:1;display:flex;min-height:0;}
+  .metro-panel{flex:0 0 268px;background:var(--app-bg);border-right:1px solid var(--border);padding:16px;overflow-y:auto;}
+  .metro-panel h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-2);}
+  .mp-card{background:#fff;border:1px solid var(--border-strong);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;}
+  .mp-task{background:#eef4fb;border-color:#cfe0f3;}
+  .mp-row{display:flex;gap:8px;align-items:center;margin:5px 0;}
+  .mp-count{font-size:30px;font-weight:800;color:var(--accent-dark);line-height:1;}
+  .mp-count small{font-size:13px;font-weight:600;color:var(--text-2);}
+  .route-list{font-size:13px;line-height:1.5;color:#333;word-break:break-word;}
+  .route-list .cur{font-weight:700;color:var(--accent-dark);}
+  .mp-btns{display:flex;gap:8px;margin-top:10px;}
+  .mp-btns button{flex:1;padding:9px 10px;font-size:13.5px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid var(--border-strong);background:#fff;font-family:inherit;}
+  .mp-btns button:hover{border-color:var(--accent);background:#eef4fb;}
+  .mp-btns button:disabled{opacity:.45;cursor:default;}
+  #mfb{margin-top:10px;font-size:13px;}
+  #mfb .err{color:var(--err);font-weight:600;}
+  #mfb .warn{color:#8a6d00;font-weight:600;}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .legend span{display:flex;align-items:center;gap:5px;font-size:12px;}
+  .legend i{width:14px;height:6px;border-radius:3px;display:inline-block;}
+
+  .map-wrap{flex:1;overflow:auto;background:#eef1f5;padding:10px;}
+  .metro-svg{display:block;background:#f7f9fb;border-radius:10px;}
+  .stlbl{fill:#333;paint-order:stroke;stroke:#f7f9fb;stroke-width:3px;stroke-linejoin:round;font-weight:600;pointer-events:none;}
+  .stn{cursor:pointer;}
+  .stn:hover .hit{fill:rgba(15,108,189,.12);}
+
+  .ok-panel{background:#eef8ee;border:1px solid #bfe3bf;border-radius:12px;padding:16px 18px;margin-top:4px;}
+  .ok-panel h2{margin:0 0 6px;color:var(--ok);font-size:18px;}
+  .continue{display:inline-block;margin-top:12px;background:var(--ok);color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-weight:600;font-size:15px;}
+  .continue:hover{background:#0b5e0b;}
+
+  .napoveda{flex:1;overflow-y:auto;padding:28px 32px;background:#fafafa;}
+  .napoveda .np-wrap{max-width:620px;margin:0 auto;}
+  .np-intro{font-size:14px;color:var(--text-2);background:#eef4fb;border:1px solid #cfe0f3;padding:12px 14px;border-radius:8px;margin:0 0 18px;}
+  .hint-card{background:#fff;border:1px solid var(--border-strong);border-left:4px solid #e8a30c;border-radius:8px;padding:14px 16px;margin-bottom:14px;}
+  .hint-card b{display:block;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:#b8790a;margin-bottom:6px;}
+  .hint-card p{margin:0;font-size:15px;line-height:1.55;}
+  .reveal-btn{background:#e8820c;color:#fff;border:none;padding:11px 20px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .reveal-btn:hover{background:#cf7109;}
+  .all-shown{font-size:13px;color:var(--text-2);}
+
+  @media (max-width:1050px){ .folders{display:none;} }
+  @media (max-width:1150px){ .metro-body{flex-direction:column;} .metro-panel{flex:0 0 auto;border-right:none;border-bottom:1px solid var(--border);} }
+  @media (max-width:860px){
+    .rail{flex:0 0 64px;} .rail .rail-title,.rail-app .rl{display:none;} .rail-app{justify-content:center;}
+    .mail-body{flex-direction:column;}
+    .list{flex:0 0 auto;max-height:34vh;border-right:none;border-bottom:1px solid var(--border);}
+  }
+</style>
+</head>
+<body>
+
+  <div class="game-bar">
+    <div class="brand"><span class="plane">✈️</span>Malý cestovatel</div>
+    <div class="task-name">Úkol 6 — Najdi cestu metrem k hotelu</div>
+    <div class="progress-pill">Úkol 6&nbsp;/&nbsp;7</div>
+  </div>
+
+  <div class="os-body">
+    <nav class="rail" id="rail"></nav>
+    <main class="screen" id="screen"></main>
+  </div>
+
+<script>
+  /* ---------- metro Paříž (zjednodušené, 5 linek, 7 přestupů) ---------- */
+  const LINES={
+    M1:{color:"#f2c200", stations:["ladefense","etoile","argentine","champs","concorde","louvre","palaisroyal","chatelet","hoteldeville","bastille","garedelyon","nation","vincennes"]},
+    M4:{color:"#b5177e", stations:["clignancourt","chateaurouge","garedunord","garedelest","strasbourg","reaumur","chatelet","cite","saintmichel","odeon","montparnasse","denfert","orleans"]},
+    M6:{color:"#73c295", stations:["etoile","trocadero","passy","birhakeim","dupleix","sevres","montparnasse","placeditalie","nation"]},
+    M7:{color:"#f59fb4", stations:["stalingrad","garedelest","poissonniere","chaussee","opera","pontneuf","jussieu","placemonge","placeditalie","portedivry"]},
+    M14:{color:"#682c92", stations:["saintlazare","madeleine","pyramides","chatelet","garedelyon","bercy","olympiades","orly"]}
+  };
+  const ST={
+    ladefense:{n:"La Défense",x:45,y:235}, etoile:{n:"Étoile",x:120,y:255}, argentine:{n:"Argentine",x:158,y:265}, champs:{n:"Champs-Élysées",x:198,y:274},
+    concorde:{n:"Concorde",x:285,y:288}, louvre:{n:"Louvre",x:338,y:298}, palaisroyal:{n:"Palais Royal",x:362,y:299}, chatelet:{n:"Châtelet",x:385,y:300},
+    hoteldeville:{n:"Hôtel de Ville",x:425,y:305}, bastille:{n:"Bastille",x:478,y:312}, garedelyon:{n:"Gare de Lyon",x:528,y:330}, nation:{n:"Nation",x:605,y:300}, vincennes:{n:"Vincennes",x:685,y:285},
+    clignancourt:{n:"Clignancourt",x:360,y:40}, chateaurouge:{n:"Château Rouge",x:363,y:64}, garedunord:{n:"Gare du Nord",x:368,y:90}, garedelest:{n:"Gare de l'Est",x:395,y:132},
+    strasbourg:{n:"Strasbourg–St-Denis",x:382,y:200}, reaumur:{n:"Réaumur",x:382,y:250}, cite:{n:"Cité",x:382,y:335}, saintmichel:{n:"Saint-Michel",x:378,y:368},
+    odeon:{n:"Odéon",x:372,y:400}, montparnasse:{n:"Montparnasse",x:340,y:452}, denfert:{n:"Denfert-Rochereau",x:345,y:505}, orleans:{n:"Porte d'Orléans",x:350,y:558},
+    trocadero:{n:"Trocadéro",x:108,y:325}, passy:{n:"Passy",x:118,y:357}, birhakeim:{n:"Bir-Hakeim",x:138,y:390}, dupleix:{n:"Dupleix",x:205,y:435}, sevres:{n:"Sèvres",x:272,y:447},
+    placeditalie:{n:"Place d'Italie",x:452,y:487},
+    stalingrad:{n:"Stalingrad",x:432,y:68}, poissonniere:{n:"Poissonnière",x:435,y:176}, chaussee:{n:"Chaussée d'Antin",x:430,y:205}, opera:{n:"Opéra",x:425,y:233},
+    pontneuf:{n:"Pont Neuf",x:415,y:286}, jussieu:{n:"Jussieu",x:432,y:352}, placemonge:{n:"Place Monge",x:448,y:402}, portedivry:{n:"Porte d'Ivry",x:470,y:548},
+    saintlazare:{n:"Saint-Lazare",x:300,y:158}, madeleine:{n:"Madeleine",x:312,y:228}, pyramides:{n:"Pyramides",x:350,y:272},
+    bercy:{n:"Bercy",x:565,y:372}, olympiades:{n:"Olympiades",x:528,y:432}, orly:{n:"Letiště Orly",x:495,y:535,airport:true}
+  };
+  const AIRPORT="orly", HOTEL="birhakeim";
+  const HOTEL_NAME="Hotel Bella Paris";
+  const HOTEL_STATION="Bir-Hakeim";
+  // viditelné popisky jen u klíčových stanic [dy, anchor]; ostatní přes hover
+  const LBL={
+    etoile:[-13,"middle"], chatelet:[-13,"middle"], garedelest:[-13,"end"], montparnasse:[19,"middle"],
+    nation:[-13,"middle"], garedelyon:[-13,"middle"], placeditalie:[19,"middle"],
+    orly:[19,"middle"], birhakeim:[0,"end"]
+  };
+  const KEY=new Set(["etoile","chatelet","garedelest","montparnasse","nation","garedelyon","placeditalie",AIRPORT,HOTEL]);
+
+  function linesOf(id){ return Object.keys(LINES).filter(L=>LINES[L].stations.includes(id)); }
+  function isInter(id){ return linesOf(id).length>1; }
+  function colorOf(id){ return LINES[linesOf(id)[0]].color; }
+  function nameOf(id){ return ST[id].n; }
+  function neighbors(id){ const r=new Set(); for(const L in LINES){ const s=LINES[L].stations,i=s.indexOf(id); if(i>=0){ if(i>0)r.add(s[i-1]); if(i<s.length-1)r.add(s[i+1]); } } return [...r]; }
+  function bfs(a,b){ const q=[[a,0]],seen=new Set([a]); while(q.length){ const [n,d]=q.shift(); if(n===b)return d; for(const m of neighbors(n)) if(!seen.has(m)){seen.add(m);q.push([m,d+1]);} } return Infinity; }
+  function commonLines(a,b){ return Object.keys(LINES).filter(L=>LINES[L].stations.includes(a)&&LINES[L].stations.includes(b)); }
+  function segment(L,a,b){ const s=LINES[L].stations; let i=s.indexOf(a),j=s.indexOf(b),st=i<j?1:-1,out=[]; for(let k=i+st;;k+=st){ out.push(s[k]); if(k===j)break; } return out; }
+  function segmentsOf(r){ const segs=[]; let active=null; for(let k=1;k<r.length;k++){ const c=commonLines(r[k-1],r[k]); const L=(active&&c.includes(active))?active:c[0]; segs.push({line:L,path:segment(L,r[k-1],r[k])}); active=L; } return segs; }
+  function expanded(r){ if(!r.length) return []; const p=[r[0]]; segmentsOf(r).forEach(s=>p.push(...s.path)); return p; }
+  const OPT=bfs(AIRPORT,HOTEL);
+
+  /* ---------- stav ---------- */
+  let app="plocha";
+  let currentId="hotel-mail";
+  let mailRead=false;
+  let hintLevel=0;
+  let route=[];
+  let solved=false;
+
+  /* ---------- e-maily ---------- */
+  const emails=[
+    { id:"hotel-mail", unread:true, sender:HOTEL_NAME, initials:"🏨", color:"#6a3fb5",
+      subject:"Potvrzení rezervace hotelu 🏨", time:"8:40",
+      preview:"Těšíme se na vás! Nejbližší stanice metra je Cadorna…",
+      body:`<p>Dobrý den a vítejte v Paříži! 👋</p>
+        <p>Potvrzujeme vaši rezervaci. Těšíme se na vás.</p>
+        <div class="resv">
+          <div class="resv-top">🏨 ${HOTEL_NAME}</div>
+          <div class="resv-body">
+            <div class="resv-row"><span class="k">Host</span><span>TY</span></div>
+            <div class="resv-row"><span class="k">Počet nocí</span><span>3</span></div>
+            <div class="resv-row"><span class="k">Nejbližší stanice metra</span><span><strong>Bir-Hakeim</strong> (M6)</span></div>
+          </div>
+        </div>
+        <p>Z letiště se k nám nejlépe dostanete <strong>metrem</strong>. V aplikaci <strong>Metro</strong> 🚇 si naplánuj cestu z letiště k naší stanici. Rezervaci najdeš i v rezervační aplikaci.</p>` },
+    { id:"marco", unread:false, sender:"Marco", initials:"M", color:"#b4009e",
+      subject:"Už jsi v Paříži? 🤩", time:"po",
+      preview:"Dej vědět, až se ubytuješ…",
+      body:`<p>Ahoj! Tak už jsi v Paříži? Ubytuj se a dej vědět, kdy se sejdeme! Marco</p>` },
+    { id:"mama", unread:false, sender:"Máma", initials:"M", color:"#107c10",
+      subject:"Dojel(a) jsi v pořádku? 😘", time:"po",
+      preview:"Napiš, až budeš v hotelu…",
+      body:`<p>Ahoj, snad jsi dorazil(a) v pořádku. Napiš mi, až se ubytuješ v hotelu. 😘 Máma</p>` }
+  ];
+
+  const apps=[
+    {id:"plocha",icon:"🖥️",label:"Plocha"},{id:"posta",icon:"📧",label:"Pošta"},
+    {id:"metro",icon:"🚇",label:"Metro"},{id:"hotely",icon:"🏨",label:"Hotely"},{id:"napoveda",icon:"💡",label:"Nápověda"}
+  ];
+
+  /* ---------- rail ---------- */
+  function renderRail(){
+    document.getElementById("rail").innerHTML=`<div class="rail-title">Aplikace</div>`+
+      apps.map(a=>{ let glow="";
+        if(a.id==="posta" && !mailRead) glow="glow";
+        if(a.id==="metro" && mailRead && !solved) glow="glow";
+        return `<button class="rail-app ${app===a.id?'active':''} ${glow}" data-app="${a.id}"><span class="ri">${a.icon}</span><span class="rl">${a.label}</span></button>`;
+      }).join("");
+  }
+
+  /* ---------- plocha ---------- */
+  function plochaHTML(){
+    const pg=!mailRead, mg=mailRead&&!solved;
+    const posta=`<button class="desk-icon ${pg?'glow':''}" data-app="posta"><span class="di">📧</span><span class="dl">Pošta</span>${pg?'<span class="start-here">Nový e-mail 👆</span>':''}</button>`;
+    const metro=`<button class="desk-icon ${mg?'glow':''}" data-app="metro"><span class="di">🚇</span><span class="dl">Metro</span>${mg?'<span class="start-here">Najdi cestu 👆</span>':''}</button>`;
+    const hotely=`<button class="desk-icon" data-app="hotely"><span class="di">🏨</span><span class="dl">Hotely</span></button>`;
+    const napo=`<button class="desk-icon" data-app="napoveda"><span class="di">💡</span><span class="dl">Nápověda</span></button>`;
+    const deco=["🗑️ Koš","🌐 Prohlížeč"].map(d=>{const[i,...n]=d.split(" ");return `<div class="desk-icon disabled"><span class="di">${i}</span><span class="dl">${n.join(" ")}</span></div>`;}).join("");
+    return `<div class="desktop"><div class="plane-deco">🚇</div><div class="desk-grid">${posta}${metro}${hotely}${napo}${deco}</div></div>`;
+  }
+
+  /* ---------- Hotely (souhrn rezervace) ---------- */
+  function hotelyHTML(){
+    return `<div class="appwin"><div class="app-title">🏨 Hotely <span class="search">Moje rezervace</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div style="flex:1;overflow:auto;background:#f5f6f8;padding:20px;">
+        <div class="resv" style="margin:0 auto;max-width:460px;">
+          <div class="resv-top">🏨 ${HOTEL_NAME}</div>
+          <div class="resv-body">
+            <div class="resv-row"><span class="k">Host</span><span>TY</span></div>
+            <div class="resv-row"><span class="k">Město</span><span>Paříž</span></div>
+            <div class="resv-row"><span class="k">Počet nocí</span><span>3</span></div>
+            <div class="resv-row"><span class="k">Hodnocení</span><span>4 ★</span></div>
+            <div class="resv-row"><span class="k">Snídaně</span><span>v ceně</span></div>
+            <div class="resv-row"><span class="k">Nejbližší stanice metra</span><span><strong>${HOTEL_STATION}</strong> (M6)</span></div>
+          </div>
+        </div>
+      </div></div>`;
+  }
+
+  /* ---------- mail ---------- */
+  function listHTML(){
+    return emails.map(e=>`
+      <div class="email-row ${e.unread?'unread':''} ${e.id===currentId?'selected':''}" data-mail="${e.id}">
+        <div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="email-main">
+          <div class="email-line1"><span class="email-sender">${e.sender}</span><span class="email-time">${e.time}</span></div>
+          <div class="email-subject">${e.subject}</div><div class="email-preview">${e.preview}</div>
+        </div><div class="dot ${e.unread?'':'hidden'}"></div></div>`).join("");
+  }
+  function readerHTML(){
+    const e=emails.find(x=>x.id===currentId);
+    return `<div class="subject">${e.subject}</div>
+      <div class="reader-head"><div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="reader-from"><div class="name">${e.sender}</div><div class="meta">komu: mně &nbsp;•&nbsp; dnes ${e.time}</div></div></div>
+      <div class="reader-body">${e.body}</div>`;
+  }
+  function postaHTML(){
+    const unread=emails.filter(e=>e.unread).length;
+    return `<div class="mailapp"><div class="app-title">📧 Pošta <span class="search">🔍&nbsp; Hledat v e-mailech</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="mail-body">
+        <nav class="folders"><button class="compose">✏️&nbsp; Nový e-mail</button>
+          <ul><li class="active">📥 Doručená pošta ${unread?`<span class="cnt">${unread}</span>`:''}</li>
+          <li>📤 Odeslaná pošta</li><li>📄 Koncepty</li><li>🗑️ Koš</li><li>🚫 Nevyžádaná pošta</li></ul></nav>
+        <section class="list"><div class="list-head">Doručená pošta</div>${listHTML()}</section>
+        <section class="reader">${readerHTML()}</section>
+      </div></div>`;
+  }
+
+  /* ---------- metro mapa ---------- */
+  function mapSVG(){
+    const W=770,H=600;
+    let lines="";
+    for(const L in LINES){ const pts=LINES[L].stations.map(id=>`${ST[id].x},${ST[id].y}`).join(" ");
+      lines+=`<polyline points="${pts}" fill="none" stroke="${LINES[L].color}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`; }
+    const ep=expanded(route); const inR=new Set(ep); const last=route[route.length-1];
+    let overlay="";
+    if(ep.length>1){ const pts=ep.map(id=>`${ST[id].x},${ST[id].y}`).join(" ");
+      overlay=`<polyline points="${pts}" fill="none" stroke="#111" stroke-width="12" stroke-linejoin="round" stroke-linecap="round" opacity="0.16"/>`; }
+    let pulse="";
+    if(route.length===0){ const a=ST[AIRPORT]; pulse=`<circle cx="${a.x}" cy="${a.y}" r="10" fill="none" stroke="#e8820c" stroke-width="3"><animate attributeName="r" values="10;20;10" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0;0.9" dur="1.6s" repeatCount="indefinite"/></circle>`; }
+    let nodes="";
+    for(const id in ST){ const s=ST[id]; const inter=isInter(id); const onR=inR.has(id); const isLast=id===last;
+      const r=inter?8:5;
+      const fill = onR? "#111" : "#fff";
+      const stroke = onR? "#111" : (inter? "#444" : colorOf(id));
+      const special = id===AIRPORT? "✈️" : id===HOTEL? "🏨" : "";
+      const ring = id===HOTEL? `<circle cx="${s.x}" cy="${s.y}" r="14" fill="none" stroke="#6a3fb5" stroke-width="2.5" stroke-dasharray="3 3"/>` :
+                   id===AIRPORT? `<circle cx="${s.x}" cy="${s.y}" r="14" fill="none" stroke="#1f6fc4" stroke-width="2.5"/>` : "";
+      const curRing = isLast? `<circle cx="${s.x}" cy="${s.y}" r="${r+5}" fill="none" stroke="#e8820c" stroke-width="3"/>` : "";
+      const [dy,anchor]=LBL[id]||[15,"middle"];
+      const label = KEY.has(id)? `<text class="stlbl ${inter?'inter':''}" x="${s.x}" y="${s.y+dy}" text-anchor="${anchor}" font-size="11">${s.n}</text>` : "";
+      nodes+=`<g class="stn" data-stn="${id}">
+        <title>${s.n}</title>
+        <circle class="hit" cx="${s.x}" cy="${s.y}" r="14" fill="transparent"/>
+        ${ring}${curRing}
+        <circle cx="${s.x}" cy="${s.y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="2.6"/>
+        ${special?`<text x="${s.x}" y="${s.y+4}" text-anchor="middle" font-size="12" pointer-events="none">${special}</text>`:""}
+        ${label}
+      </g>`;
+    }
+    return `<div class="map-wrap"><svg class="metro-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${lines}${overlay}${pulse}${nodes}</svg></div>`;
+  }
+  function panelHTML(){
+    const ep=expanded(route); const count=ep.length?ep.length-1:0;
+    const routeTxt = ep.length? ep.map((id,i)=>`<span class="${i===ep.length-1?'cur':''}">${nameOf(id)}</span>`).join(" → ") : "<span style='color:#888'>Zatím nic — klikni na letiště ✈️.</span>";
+    const legend=Object.keys(LINES).map(L=>`<span><i style="background:${LINES[L].color}"></i>${L}</span>`).join("");
+    let okOrFb="";
+    if(solved){ okOrFb=`<div class="ok-panel"><h2>✅ Výborně!</h2>Našel(a) jsi nejkratší cestu — <strong>${count} stanic</strong>.
+        <br><a class="continue" href="../07-plan-vyletu/index.html">Pokračovat na další úkol →</a></div>`; }
+    else { okOrFb=`<div class="mp-btns"><button data-undo="1" ${route.length<=0?'disabled':''}>↩︎ Zpět</button><button data-reset="1" ${route.length<=0?'disabled':''}>⟲ Začít znovu</button></div><div id="mfb"></div>`; }
+    return `<div class="metro-panel">
+      <h3>Tvůj úkol</h3>
+      <div class="mp-card mp-task">Najdi <strong>nejkratší</strong> cestu metrem z letiště k hotelu. Klikni nejdřív na letiště ✈️, pak postupuj po stanicích a přestupech.</div>
+      <div class="mp-card">
+        <div class="mp-row">✈️ <strong>Start:</strong>&nbsp;${nameOf(AIRPORT)}</div>
+        <div class="mp-row">🏨 <strong>Cíl:</strong>&nbsp;${HOTEL_NAME} — st. ${HOTEL_STATION}</div>
+      </div>
+      <h3>Tvoje trasa</h3>
+      <div class="mp-card">
+        <div class="mp-count">${count}<small> stanic</small></div>
+        <div class="route-list" style="margin-top:8px">${routeTxt}</div>
+        ${okOrFb}
+      </div>
+      <h3>Linky</h3>
+      <div class="legend">${legend}</div>
+    </div>`;
+  }
+  function metroHTML(){
+    return `<div class="appwin"><div class="app-title">🚇 Metro Paříž <span class="search">Mapa linek</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="metro-body">${panelHTML()}${mapSVG()}</div></div>`;
+  }
+
+  /* ---------- nápověda ---------- */
+  const HINTS=[
+    `<b>Nápověda 1</b><p>Nejdřív klikni na stanici s <strong>letištěm ✈️</strong>. Pak klikej na stanice, kam chceš pokračovat.</p>`,
+    `<b>Nápověda 2</b><p>Jet můžeš jen po jedné lince. Chceš-li změnit linku, musíš <strong>přestoupit</strong> na stanici, kde se linky kříží (velké kolečko).</p>`,
+    `<b>Nápověda 3</b><p>Sleduj <strong>počet stanic</strong> nahoře. Zkoušej různé cesty (tlačítkem <em>Začít znovu</em>) a najdi tu s <strong>nejmenším počtem stanic</strong>.</p>`
+  ];
+  function napovedaHTML(){
+    const cards=HINTS.slice(0,hintLevel).map(h=>`<div class="hint-card">${h}</div>`).join("");
+    const btn=hintLevel<HINTS.length?`<button class="reveal-btn" id="revealHint">${hintLevel===0?'Zobrazit nápovědu':'Další nápověda'}</button>`:`<p class="all-shown">To je vše. Teď to zkus! 😊</p>`;
+    return `<div class="appwin"><div class="app-title">💡 Nápověda</div>
+      <div class="napoveda"><div class="np-wrap"><p class="np-intro">Nevíš si rady s metrem? Odkrývej nápovědy postupně.</p>${cards}${btn}</div></div></div>`;
+  }
+
+  /* ---------- render ---------- */
+  function renderScreen(){
+    document.getElementById("screen").innerHTML =
+      app==="plocha"?plochaHTML():app==="posta"?postaHTML():app==="metro"?metroHTML():app==="hotely"?hotelyHTML():napovedaHTML();
+  }
+  function render(){ renderRail(); renderScreen(); }
+  function openApp(id){
+    if(id==="posta" && !mailRead){ mailRead=true; const m=emails.find(e=>e.id==="hotel-mail"); if(m) m.unread=false; }
+    app=id; render();
+  }
+  function selectEmail(id){ const e=emails.find(x=>x.id===id); if(e&&e.unread) e.unread=false; currentId=id; renderScreen(); }
+  function metroMsg(html,cls){ const fb=document.getElementById("mfb"); if(fb) fb.innerHTML=`<span class="${cls}">${html}</span>`; }
+
+  function clickStation(id){
+    if(solved) return;
+    if(route.length===0){ if(id!==AIRPORT){ renderScreen(); metroMsg("Začni na stanici s letištěm ✈️.","err"); return; } route=[id]; renderScreen(); return; }
+    const last=route[route.length-1];
+    if(id===last){ return; }
+    if(commonLines(last,id).length===0){ renderScreen(); metroMsg("Tyto stanice nejsou na stejné lince. Přestoupit můžeš jen tam, kde se linky kříží (velká kolečka).","err"); return; }
+    route.push(id);
+    if(id===HOTEL){
+      const count=expanded(route).length-1;
+      if(count===OPT){ solved=true; render(); return; }
+      renderScreen(); metroMsg(`Dojel(a) jsi do cíle za ${count} stanic — ale jde to i kratší! Zkus <em>Začít znovu</em> a najdi nejkratší cestu.`,"warn"); return;
+    }
+    renderScreen();
+  }
+
+  /* ---------- eventy ---------- */
+  document.addEventListener("click", e=>{
+    const railBtn=e.target.closest("[data-app]"); if(railBtn){ openApp(railBtn.dataset.app); return; }
+    const row=e.target.closest("[data-mail]"); if(row){ selectEmail(row.dataset.mail); return; }
+    if(e.target.id==="revealHint"){ if(hintLevel<HINTS.length){hintLevel++; renderScreen();} return; }
+    const stn=e.target.closest("[data-stn]"); if(stn){ clickStation(stn.dataset.stn); return; }
+    if(e.target.closest("[data-undo]")){ if(route.length>0){ route.pop(); renderScreen(); } return; }
+    if(e.target.closest("[data-reset]")){ route=[]; renderScreen(); return; }
+  });
+
+  render();
+</script>
+</body>
+</html>

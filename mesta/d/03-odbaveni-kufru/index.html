@@ -356,6 +356,7 @@
       preview:"Postupuj podle našeho rozhodovacího stromu…",
       body:`<p>Dobrý den a vítejte na letišti! 👋</p>
         <p>Při odbavení se řiďte tímto <strong>rozhodovacím stromem</strong>. U každého rozhodnutí 🔀 se vydejte podle odpovědi (ANO/NE). Pozor — jeden krok se může i opakovat, je tam <strong>smyčka</strong> 🔁 (opakuje se, dokud není příruční v pořádku):</p>
+        <div style="background:#fff4f4;border:1px solid #f1c0c0;border-radius:10px;padding:10px 12px;margin:12px 0;">⚠️ <strong>Co nesmí do příručního zavazadla:</strong> tekutiny nad <strong>100 ml</strong> a <strong>ostré předměty</strong> (např. nůžky nebo nožík). Takové věci patří do <strong>odbaveného kufru</strong>.</div>
         <div style="background:#f5f6f8;border:1px solid #edebe9;border-radius:10px;padding:12px;margin:12px 0;">${diagramHTML(false)}</div>
         <p>Celý postup projdeš v aplikaci <strong>Letiště</strong> 🛫. Šťastnou cestu!</p>` },
     { id:"ticket", unread:true, sender:"Imaginarium Airlines", initials:"✈", color:"#0f6cbd",
@@ -453,7 +454,8 @@
         <div class="row"><span class="k">Obsah</span><span>oblečení, boty, dárky</span></div>
         ${repacked?`<div class="moved">+ přeloženo z příručního: ${forbiddenNames}</div>`:""}</div>
       <div class="bag-card"><div class="bc-title">🎒 Příruční batoh</div>
-        <div class="chips2">${carry.map(i=>`<span class="chip2">${i.icon} ${i.name}</span>`).join("")}</div></div></div>`;
+        <div class="chips2">${carry.map(i=>`<span class="chip2">${i.icon} ${i.name}</span>`).join("")}</div>
+        <div style="margin-top:8px;font-size:12px;color:#8a5340;background:#fff4f4;border-radius:6px;padding:6px 8px;">🚫 Do příručního nesmí tekutiny nad 100 ml ani ostré předměty.</div></div></div>`;
   }
   function repackHTML(){
     const zoneItems=z=>scenario.carryOn.filter(i=>(placement[i.id]||"pool")===z);
@@ -480,10 +482,11 @@
         `<div class="ac-actions"><button class="btn btn-primary" data-advance="a1">🎁 Vyndat dárky do příručního</button></div>`);
     if(step==="q2"||step==="q2b")
       return wrap("🔀 Rozhodnutí","Je v příručním zavazadle něco, co tam nesmí?",
-        `<div class="ac-actions"><button class="btn btn-choice" data-dec="q2:ANO">ANO</button><button class="btn btn-choice" data-dec="q2:NE">NE</button></div>`);
+        `<div class="ac-actions"><button class="btn btn-choice" data-dec="q2:ANO">ANO</button><button class="btn btn-choice" data-dec="q2:NE">NE</button></div>`,
+        "Do příručního nesmí tekutiny nad 100 ml ani ostré předměty (nůžky, nožík). Zkontroluj obsah batohu vlevo.");
     if(step==="a2")
       return wrap("Krok: Přebalení (smyčka 🔁)","Roztřiď věci z příručního.",
-        repackHTML(), "Přetáhni nebo klikni 🧳 / 🎒. Co nesmí do příručního, dej do kufru. Pak se vrátíš k otázce.");
+        repackHTML(), "Do příručního nesmí tekutiny nad 100 ml ani ostré předměty — ty dej do kufru 🧳, ostatní nech v příručním 🎒. Přetáhni nebo klikni. Pak se vrátíš k otázce.");
     if(step==="q3")
       return wrap("🔀 Rozhodnutí","Odbavil ses předem online?",
         `<div class="ac-actions"><button class="btn btn-choice" data-dec="q3:automat">ANO</button><button class="btn btn-choice" data-dec="q3:prepazka">NE</button></div>`);

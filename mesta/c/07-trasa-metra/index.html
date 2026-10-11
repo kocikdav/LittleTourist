@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Úkol 6 – Cesta metrem | Malý cestovatel</title>
+<title>Úkol 7 – Cesta metrem | Malý cestovatel</title>
 <style>
   :root{
     --accent:#0f6cbd; --accent-dark:#115ea3;
@@ -150,8 +150,8 @@
 
   <div class="game-bar">
     <div class="brand"><span class="plane">✈️</span>Malý cestovatel</div>
-    <div class="task-name">Úkol 6 — Najdi cestu metrem k hotelu</div>
-    <div class="progress-pill">Úkol 6&nbsp;/&nbsp;7</div>
+    <div class="task-name">Úkol 7 — Najdi cestu metrem k hotelu</div>
+    <div class="progress-pill">Úkol 7&nbsp;/&nbsp;9</div>
   </div>
 
   <div class="os-body">
@@ -350,7 +350,7 @@
     const legend=Object.keys(LINES).map(L=>`<span><i style="background:${LINES[L].color}"></i>${L}</span>`).join("");
     let okOrFb="";
     if(solved){ okOrFb=`<div class="ok-panel"><h2>✅ Výborně!</h2>Našel(a) jsi nejkratší cestu — <strong>${count} stanic</strong>.
-        <br><a class="continue" href="../07-plan-vyletu/index.html">Pokračovat na další úkol →</a></div>`; }
+        <br><a class="continue" href="../08-plan-vyletu/index.html">Pokračovat na další úkol →</a></div>`; }
     else { okOrFb=`<div class="mp-btns"><button data-undo="1" ${route.length<=0?'disabled':''}>↩︎ Zpět</button><button data-reset="1" ${route.length<=0?'disabled':''}>⟲ Začít znovu</button></div><div id="mfb"></div>`; }
     return `<div class="metro-panel">
       <h3>Tvůj úkol</h3>

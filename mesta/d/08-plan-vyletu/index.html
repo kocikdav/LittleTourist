@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Úkol 7 – Plán dne podle počasí | Malý cestovatel</title>
+<title>Úkol 8 – Plán dne podle počasí | Malý cestovatel</title>
 <style>
   :root{
     --accent:#0f6cbd; --accent-dark:#115ea3;
@@ -172,8 +172,8 @@
 
   <div class="game-bar">
     <div class="brand"><span class="plane">✈️</span>Malý cestovatel</div>
-    <div class="task-name">Úkol 7 — Naplánuj den podle počasí</div>
-    <div class="progress-pill">Úkol 7&nbsp;/&nbsp;7</div>
+    <div class="task-name">Úkol 8 — Naplánuj den podle počasí</div>
+    <div class="progress-pill">Úkol 8&nbsp;/&nbsp;9</div>
   </div>
 
   <div class="os-body">
@@ -205,15 +205,15 @@
 
   // parts = ve kterou denní dobu lze; weather: "slunecno" (venku, potřebuje hezké počasí) nebo "any" (za každého počasí)
   const ACTS=[
-    {id:"snidane",  ic:"🍳", name:"Anglická snídaně",         parts:["rano"],              weather:"any"},
-    {id:"prochazka",ic:"🌳", name:"Procházka Hyde Parkem",    parts:["rano","odpoledne"],  weather:"slunecno"},
-    {id:"strecha",  ic:"🎡", name:"Vyhlídka z London Eye",    parts:["rano","odpoledne"],  weather:"slunecno"},
-    {id:"hrad",     ic:"🏰", name:"Tower of London",          parts:["rano","odpoledne"],  weather:"any"},
-    {id:"galerie",  ic:"🏛️", name:"British Museum",            parts:["odpoledne"],         weather:"any"},
-    {id:"nakupy",   ic:"🛍️", name:"Nákupy na Oxford Street",   parts:["odpoledne","vecer"], weather:"any"},
-    {id:"opera",    ic:"🎭", name:"Muzikál ve West Endu",     parts:["vecer"],             weather:"any"},
-    {id:"vecere",   ic:"🍟", name:"Večeře — fish & chips",    parts:["vecer"],             weather:"any"},
-    {id:"fotbal",   ic:"⚽", name:"Fotbal na Wembley",         parts:["vecer"],             weather:"slunecno"}
+    {id:"snidane",  ic:"🍫", name:"Churros s čokoládou",         parts:["rano"],              weather:"any"},
+    {id:"prochazka",ic:"🌳", name:"Procházka parkem Retiro",     parts:["rano","odpoledne"],  weather:"slunecno"},
+    {id:"strecha",  ic:"🌆", name:"Vyhlídka na střeše Bellas Artes", parts:["rano","odpoledne"], weather:"slunecno"},
+    {id:"hrad",     ic:"🏰", name:"Královský palác",             parts:["rano","odpoledne"],  weather:"any"},
+    {id:"galerie",  ic:"🖼️", name:"Muzeum Prado",                parts:["odpoledne"],         weather:"any"},
+    {id:"nakupy",   ic:"🛍️", name:"Nákupy na Gran Vía",          parts:["odpoledne","vecer"], weather:"any"},
+    {id:"opera",    ic:"💃", name:"Flamenco show",               parts:["vecer"],             weather:"any"},
+    {id:"vecere",   ic:"🥘", name:"Večeře — tapas a paella",     parts:["vecer"],             weather:"any"},
+    {id:"fotbal",   ic:"⚽", name:"Fotbal na Bernabéu",          parts:["vecer"],             weather:"slunecno"}
   ];
 
   /* ---------- stav ---------- */
@@ -228,13 +228,13 @@
   /* ---------- e-maily ---------- */
   const emails=[
     { id:"marco", unread:true, sender:"Marco", initials:"M", color:"#b4009e",
-      subject:"Naplánujeme si den v Londýně! 🗺️", time:"8:20",
+      subject:"Naplánujeme si den v Madridu! 🗺️", time:"8:20",
       preview:"Mrkni na počasí a sestav plán na ráno, odpoledne a večer…",
-      body:`<p>Ahoj! 🎉 Jsi tady — tak si užijeme den v Londýně!</p>
+      body:`<p>Ahoj! 🎉 Jsi tady — tak si užijeme den v Madridu!</p>
         <p>Nejdřív mrkni v aplikaci <strong>Počasí 🌤️</strong>, jak bude. Pak v aplikaci <strong>Plánovač 🗺️</strong> sestav <strong>plán dne</strong> — vyber aktivitu na <strong>ráno</strong>, <strong>odpoledne</strong> a <strong>večer</strong>.</p>
         <p>Pozor: každá aktivita se hodí jen na určitou denní dobu a některé potřebují <strong>hezké počasí</strong> (venku). Když prší, naplánuj něco <strong>uvnitř</strong>. Pak dej <strong>Zkontrolovat plán</strong>. Těším se! Marco</p>` },
     { id:"mama", unread:false, sender:"Máma", initials:"M", color:"#107c10",
-      subject:"Užij si Londýn! 😘", time:"po",
+      subject:"Užij si Madrid! 😘", time:"po",
       preview:"Pošli mi fotku z výletu…",
       body:`<p>Ahoj, snad ses dobře ubytoval(a). Užij si den a pošli mi fotku! 😘 Máma</p>` }
   ];
@@ -299,10 +299,10 @@
   function pocasiHTML(){
     const cards=FORECAST.map(f=>`<div class="fc-card"><div class="ft">${f.t}</div><div class="fi">${f.ic}</div><div class="fp">${f.temp}</div><div class="fd">${f.d}</div></div>`).join("");
     const sum=SLOTS.map(s=>`<div class="ss"><div class="sn">${s.ic} ${s.name}</div><div class="si">${s.wIc}</div><div class="sw">${s.wLbl} (${s.hoursLbl})</div></div>`).join("");
-    return `<div class="appwin"><div class="app-title">🌤️ Počasí — Londýn</div>
+    return `<div class="appwin"><div class="app-title">🌤️ Počasí — Madrid</div>
       <div class="pocasi">
         <h2>Předpověď na dnešek</h2>
-        <p class="sub">Hodinová předpověď počasí v Londýně.</p>
+        <p class="sub">Hodinová předpověď počasí v Madridu.</p>
         <div class="fc-row">${cards}</div>
         <h2 style="margin-top:20px;font-size:15px">Souhrn podle denní doby</h2>
         <div class="slot-sum">${sum}</div>
@@ -324,11 +324,13 @@
   function planHTML(){
     if(solved){
       const sum=SLOTS.map(s=>{ const a=ACTS.find(x=>placement[x.id]===s.id); return `<div class="ps-row"><b>${s.ic} ${s.name}</b><span>${a?a.ic+" "+a.name:"—"}</span></div>`; }).join("");
+      const g=sid=>{ const a=ACTS.find(x=>placement[x.id]===sid); return a?a.id:""; };
+      const nextUrl=`../09-sbal-batoh/index.html?r=${g("rano")}&o=${g("odpoledne")}&v=${g("vecer")}&w=${SLOTS.map(s=>s.weather).join(",")}`;
       return `<div class="appwin"><div class="app-title">🗺️ Plánovač výletu</div>
         <div class="plan"><div class="result"><div class="big">🎉🗺️</div><h2>Máš hotový plán dne!</h2>
-          <p>A tím jsi <strong>dokončil(a) celou cestu Malého cestovatele</strong>. Skvělá práce! 👏</p>
+          <p>Teď se podle něj ještě <strong>sbal na výlet</strong>. 🎒</p>
           <div class="plan-summary">${sum}</div>
-          <a class="continue" href="../../../index.html">🏁 Zpět na začátek</a></div></div></div>`;
+          <a class="continue" href="${nextUrl}">Pokračovat na další úkol →</a></div></div></div>`;
     }
     const slots=SLOTS.map(s=>{
       const acts=ACTS.filter(a=>placement[a.id]===s.id);

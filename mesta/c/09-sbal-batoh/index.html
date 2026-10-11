@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Úkol 9 – Sbal si batoh | Malý cestovatel</title>
+<style>
+  :root{
+    --accent:#0f6cbd; --accent-dark:#115ea3;
+    --app-bg:#faf9f8; --border:#edebe9; --border-strong:#e1dfdd;
+    --text:#242424; --text-2:#616161; --unread:#0f6cbd;
+    --sel:#e9f0f8; --sel-strong:#cfe4fa;
+    --ok:#107c10; --err:#d13438; --rail:#223049; --rail-2:#2c3e5e;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    color:var(--text);background:#f3f2f1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+  .game-bar{flex:0 0 auto;height:52px;background:#fff;border-bottom:1px solid var(--border-strong);
+    display:flex;align-items:center;justify-content:space-between;padding:0 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);z-index:5;}
+  .game-bar .brand{font-weight:700;font-size:16px;}
+  .game-bar .brand .plane{margin-right:6px;}
+  .game-bar .task-name{color:var(--text-2);font-size:14px;}
+  .progress-pill{background:var(--accent);color:#fff;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;}
+
+  .os-body{flex:1;display:flex;min-height:0;}
+  .rail{flex:0 0 190px;background:var(--rail);color:#eaeef6;display:flex;flex-direction:column;gap:6px;padding:14px 10px;}
+  .rail .rail-title{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#8ea2c4;padding:4px 10px 10px;}
+  .rail-app{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:none;color:#eaeef6;
+    padding:11px 12px;border-radius:10px;cursor:pointer;font-size:15px;text-align:left;font-family:inherit;}
+  .rail-app:hover{background:var(--rail-2);}
+  .rail-app.active{background:var(--accent);color:#fff;}
+  .rail-app .ri{font-size:20px;width:24px;text-align:center;}
+  .rail-app.glow{box-shadow:0 0 0 0 rgba(255,196,0,.7);animation:glowpulse 1.8s infinite;}
+  @keyframes glowpulse{0%{box-shadow:0 0 0 0 rgba(255,196,0,.75);}70%{box-shadow:0 0 0 12px rgba(255,196,0,0);}100%{box-shadow:0 0 0 0 rgba(255,196,0,0);}}
+
+  .screen{flex:1;min-width:0;position:relative;overflow:hidden;background:#fff;}
+
+  .desktop{height:100%;width:100%;background:linear-gradient(160deg,#9ed0ff 0%,#6aa9e9 45%,#4f8fd6 100%);padding:26px;position:relative;}
+  .desktop .plane-deco{position:absolute;right:40px;top:30px;font-size:54px;transform:rotate(-8deg);opacity:.9;}
+  .desk-grid{display:grid;grid-template-columns:repeat(auto-fill,96px);gap:18px 14px;align-content:start;}
+  .desk-icon{width:96px;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+    gap:7px;padding:8px 4px;border-radius:10px;font-family:inherit;color:#0a2a4d;}
+  .desk-icon .di{width:60px;height:60px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:30px;box-shadow:0 4px 10px rgba(0,0,0,.18);}
+  .desk-icon .dl{font-size:13px;font-weight:600;color:#06264a;background:rgba(255,255,255,.55);padding:1px 7px;border-radius:6px;}
+  .desk-icon:hover:not(.disabled){background:rgba(255,255,255,.22);}
+  .desk-icon.disabled{cursor:default;opacity:.65;}
+  .desk-icon.glow .di{animation:glowpulse 1.8s infinite;}
+  .start-here{margin-top:2px;font-size:11px;font-weight:700;color:#fff;background:#e8820c;padding:3px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+
+  .appwin,.mailapp{display:flex;flex-direction:column;height:100%;}
+  .app-title{flex:0 0 auto;height:46px;background:var(--accent);color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px;font-weight:600;font-size:15px;}
+  .app-title .search{flex:1;max-width:440px;background:rgba(255,255,255,.18);border-radius:4px;padding:7px 12px;font-size:13px;color:#eaf2fb;font-weight:400;}
+  .avatar{flex:0 0 36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;}
+
+  /* mail */
+  .mail-body{flex:1;display:flex;min-height:0;}
+  .folders{flex:0 0 210px;background:var(--app-bg);border-right:1px solid var(--border);padding:12px 8px;overflow-y:auto;}
+  .compose{width:100%;border:1px solid var(--border-strong);background:#fff;color:var(--accent);font-weight:600;font-size:14px;padding:9px 12px;border-radius:6px;cursor:pointer;margin-bottom:12px;text-align:left;font-family:inherit;}
+  .folders ul{list-style:none;margin:0;padding:0;}
+  .folders li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;font-size:14px;color:var(--text);}
+  .folders li .cnt{margin-left:auto;color:var(--text-2);font-size:12px;font-weight:600;}
+  .folders li.active{background:var(--sel-strong);font-weight:600;}
+  .list{flex:0 0 340px;background:#fff;border-right:1px solid var(--border);overflow-y:auto;}
+  .list-head{padding:12px 16px;font-weight:700;font-size:16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;}
+  .email-row{display:flex;gap:12px;padding:12px 16px 12px 12px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid transparent;}
+  .email-row:hover{background:#f5f9fd;}
+  .email-row.selected{background:var(--sel);border-left-color:var(--accent);}
+  .email-row.unread{border-left-color:var(--unread);}
+  .email-main{flex:1;min-width:0;}
+  .email-line1{display:flex;align-items:center;gap:8px;}
+  .email-sender{font-size:14px;}
+  .email-row.unread .email-sender{font-weight:700;}
+  .email-time{margin-left:auto;font-size:12px;color:var(--text-2);white-space:nowrap;}
+  .email-subject{font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .email-row.unread .email-subject{font-weight:600;color:var(--accent-dark);}
+  .email-preview{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dot{flex:0 0 8px;height:8px;border-radius:50%;background:var(--unread);align-self:center;}
+  .dot.hidden{visibility:hidden;}
+  .reader{flex:1;background:#fff;overflow-y:auto;padding:24px 32px;min-width:0;}
+  .reader .subject{font-size:21px;font-weight:600;margin:0 0 14px;}
+  .reader-head{display:flex;gap:12px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .reader-head .avatar{flex:0 0 40px;height:40px;}
+  .reader-from .name{font-weight:600;font-size:14px;}
+  .reader-from .meta{font-size:12px;color:var(--text-2);}
+  .reader-body{font-size:15px;line-height:1.6;max-width:720px;}
+  .reader-body p{margin:0 0 12px;}
+
+  /* ---- Sbalení ---- */
+  .pack-body{flex:1;display:flex;min-height:0;}
+  .bag-panel{flex:0 0 260px;background:var(--app-bg);border-right:1px solid var(--border);padding:16px;overflow-y:auto;}
+  .bag-panel h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-2);}
+  .bag-card{background:#fff;border:1px solid var(--border-strong);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13.5px;}
+  .plan-row{padding:8px 0;border-bottom:1px dashed var(--border);}
+  .plan-row:last-child{border-bottom:none;}
+  .pr-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:3px;}
+  .pr-weather{font-weight:400;color:var(--text-2);font-size:12.5px;}
+  .pr-act{font-size:13.5px;}
+  .pr-tags{margin-left:4px;}
+  .legend{font-size:12px;color:var(--text-2);background:#eef4fb;border:1px solid #cfe0f3;border-radius:8px;padding:7px 10px;}
+
+  .work{flex:1;display:flex;min-width:0;}
+  .dia-col{flex:0 0 auto;overflow:auto;padding:14px;border-right:1px solid var(--border);background:#f5f6f8;}
+  .card-col{flex:1;overflow:auto;padding:18px 20px;min-width:0;}
+
+  /* diagram */
+  .diagram-wrap{overflow-x:auto;}
+  .diagram{position:relative;}
+  .dia-svg{position:absolute;left:0;top:0;pointer-events:none;}
+  .edge{fill:none;stroke:#c6ccd6;stroke-width:3;stroke-linejoin:round;stroke-linecap:round;}
+  .edge.on{stroke:#2f9e44;stroke-width:4;}
+  .edge.cut{stroke:#dce0e6;stroke-dasharray:5 6;}
+  .dnode{position:absolute;display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:10px;
+    border:1px solid var(--border-strong);background:#fff;font-size:12.5px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+  .dnode .dic{font-size:16px;flex:0 0 auto;}
+  .dnode .dlbl{line-height:1.15;}
+  .dnode.se{justify-content:center;background:#eef4fb;border-color:#bcd7f2;font-weight:700;}
+  .dnode.dec{background:#fff7e6;border-color:#f0cf7a;}
+  .dnode.leaf{background:#eef6ff;border-color:#bcd7f2;}
+  .dnode.action{background:#eef8ee;border-color:#9fd6a3;font-weight:700;justify-content:center;}
+  .dnode.current{box-shadow:0 0 0 3px rgba(232,130,12,.45);border-color:#e8820c;z-index:2;}
+  .dnode.done{background:#eef8ee;border-color:#9fd6a3;}
+  .dnode.skip{opacity:.4;border-style:dashed;}
+  .dnode .dbadge{margin-left:auto;font-size:10px;font-weight:700;background:#cfe7d2;color:#1f7a2b;padding:1px 6px;border-radius:999px;}
+  .dlabel{position:absolute;font-size:11px;font-weight:700;color:#8a5a00;background:#f5f6f8;padding:0 4px;border-radius:4px;}
+
+  .active-card{max-width:560px;background:#fff;border:1px solid var(--border-strong);border-radius:12px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .active-card h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#b8790a;}
+  .active-card .q{font-size:18px;font-weight:600;margin:4px 0 14px;}
+  .ac-note{font-size:13px;color:var(--text-2);margin:-6px 0 14px;}
+  .ac-actions{display:flex;flex-wrap:wrap;gap:10px;}
+  .btn{padding:10px 18px;font-size:15px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid transparent;font-family:inherit;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-choice{background:#fff;border-color:var(--border-strong);color:var(--text);}
+  .btn-choice:hover{border-color:var(--accent);background:#eef4fb;}
+  #afb{margin-top:12px;font-size:13.5px;}
+  #afb .err{color:var(--err);font-weight:600;}
+  #afb .ok{color:var(--ok);font-weight:600;}
+
+  .pack{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;}
+  .rzone{flex:1;min-width:150px;border:2px dashed #c6ccd6;border-radius:10px;padding:10px;min-height:120px;background:#fafbfc;}
+  .rzone h4{margin:0 0 8px;font-size:12.5px;}
+  .rzone.batoh{border-color:#9ad3a0;} .rzone.doma{border-color:#e0a0a0;} .rzone.pool{border-color:#e0b96a;background:#fffdf5;}
+  .ritem{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border-strong);border-radius:8px;padding:6px 9px;margin-bottom:7px;cursor:grab;font-size:13px;}
+  .ritem:active{cursor:grabbing;}
+  .ritem .rbtns{margin-left:auto;display:flex;gap:4px;}
+  .ritem .rbtns button{font-size:12px;padding:3px 7px;border-radius:6px;border:1px solid var(--border-strong);background:#fff;cursor:pointer;}
+  .ritem .rbtns button:hover{background:#eef4fb;border-color:var(--accent);}
+  .ritem.wrong{border-color:var(--err);background:#fdeeee;}
+
+  .result{text-align:center;padding:16px;}
+  .result .big{font-size:58px;line-height:1.1;}
+  .continue{display:inline-block;margin-top:16px;background:var(--ok);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:15px;}
+  .continue:hover{background:#0b5e0b;}
+
+  .napoveda{flex:1;overflow-y:auto;padding:28px 32px;background:#fafafa;}
+  .napoveda .np-wrap{max-width:620px;margin:0 auto;}
+  .np-intro{font-size:14px;color:var(--text-2);background:#eef4fb;border:1px solid #cfe0f3;padding:12px 14px;border-radius:8px;margin:0 0 18px;}
+  .hint-card{background:#fff;border:1px solid var(--border-strong);border-left:4px solid #e8a30c;border-radius:8px;padding:14px 16px;margin-bottom:14px;}
+  .hint-card b{display:block;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:#b8790a;margin-bottom:6px;}
+  .hint-card p{margin:0;font-size:15px;line-height:1.55;}
+  .reveal-btn{background:#e8820c;color:#fff;border:none;padding:11px 20px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .reveal-btn:hover{background:#cf7109;}
+  .all-shown{font-size:13px;color:var(--text-2);}
+
+  .shake{animation:shake .35s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  @media (max-width:1050px){ .folders{display:none;} }
+  @media (max-width:1150px){ .pack-body{flex-direction:column;} .bag-panel{flex:0 0 auto;border-right:none;border-bottom:1px solid var(--border);} }
+  @media (max-width:860px){
+    .rail{flex:0 0 64px;} .rail .rail-title,.rail-app .rl{display:none;} .rail-app{justify-content:center;}
+    .work,.mail-body{flex-direction:column;}
+    .dia-col{flex:0 0 auto;border-right:none;border-bottom:1px solid var(--border);}
+    .list{flex:0 0 auto;max-height:34vh;border-right:none;border-bottom:1px solid var(--border);}
+  }
+</style>
+</head>
+<body>
+
+  <div class="game-bar">
+    <div class="brand"><span class="plane">✈️</span>Malý cestovatel</div>
+    <div class="task-name">Úkol 9 — Sbal si batoh na výlet</div>
+    <div class="progress-pill">Úkol 9&nbsp;/&nbsp;9</div>
+  </div>
+
+  <div class="os-body">
+    <nav class="rail" id="rail"></nav>
+    <main class="screen" id="screen"></main>
+  </div>
+
+<script>
+  /* ---------- helpers ---------- */
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+  /* ---------- aktivity (id → název, ikona, denní doby, počasí, venku?, vstupenka?) ---------- */
+  const ACTS=[
+    {id:"snidane",  ic:"🍳", name:"Anglická snídaně",         parts:["rano"],              weather:"any",      outdoor:false, ticket:false},
+    {id:"prochazka",ic:"🌳", name:"Procházka Hyde Parkem",    parts:["rano","odpoledne"],  weather:"slunecno", outdoor:true,  ticket:false},
+    {id:"strecha",  ic:"🎡", name:"Vyhlídka z London Eye",    parts:["rano","odpoledne"],  weather:"slunecno", outdoor:true,  ticket:true},
+    {id:"hrad",     ic:"🏰", name:"Tower of London",          parts:["rano","odpoledne"],  weather:"any",      outdoor:false, ticket:true},
+    {id:"galerie",  ic:"🏛️", name:"British Museum",            parts:["odpoledne"],         weather:"any",      outdoor:false, ticket:true},
+    {id:"nakupy",   ic:"🛍️", name:"Nákupy na Oxford Street",   parts:["odpoledne","vecer"], weather:"any",      outdoor:false, ticket:false},
+    {id:"opera",    ic:"🎭", name:"Muzikál ve West Endu",     parts:["vecer"],             weather:"any",      outdoor:false, ticket:true},
+    {id:"vecere",   ic:"🍟", name:"Večeře — fish & chips",    parts:["vecer"],             weather:"any",      outdoor:false, ticket:false},
+    {id:"fotbal",   ic:"⚽", name:"Fotbal na Wembley",         parts:["vecer"],             weather:"slunecno", outdoor:true,  ticket:true}
+  ];
+  const actById=id=>ACTS.find(a=>a.id===id);
+  const SLOTDEF=[{id:"rano",ic:"🌅",name:"Ráno"},{id:"odpoledne",ic:"🏙️",name:"Odpoledne"},{id:"vecer",ic:"🌆",name:"Večer"}];
+  const WMAP={slunecno:{ic:"☀️",lbl:"Slunečno"}, destivo:{ic:"🌧️",lbl:"Deštivo"}};
+
+  /* ---------- plán z URL parametrů (nebo náhodný výchozí) ---------- */
+  function genDefault(){
+    const ids={}, w={}, used=new Set();
+    SLOTDEF.forEach(s=>{ const ww=Math.random()<0.5?"slunecno":"destivo"; w[s.id]=ww;
+      const cands=ACTS.filter(a=>!used.has(a.id)&&a.parts.includes(s.id)&&(a.weather==="any"||ww==="slunecno"));
+      const a=pick(cands); ids[s.id]=a.id; used.add(a.id); });
+    return {ids,w};
+  }
+  function parsePlan(){
+    const q=new URLSearchParams(location.search);
+    const ids={rano:q.get("r"),odpoledne:q.get("o"),vecer:q.get("v")};
+    const wa=(q.get("w")||"").split(",");
+    const w={rano:wa[0],odpoledne:wa[1],vecer:wa[2]};
+    const ok=SLOTDEF.every(s=>actById(ids[s.id]) && WMAP[w[s.id]]);
+    return ok?{ids,w}:genDefault();
+  }
+  const PLAN=parsePlan();
+  const chosen=SLOTDEF.map(s=>({slot:s, w:PLAN.w[s.id], act:actById(PLAN.ids[s.id])}));
+  const vecer=chosen.find(c=>c.slot.id==="vecer");
+
+  /* ---------- podmínky odvozené z plánu + počasí ---------- */
+  const cond={
+    rain:       chosen.some(c=>c.w==="destivo"),
+    outdoorSun: chosen.some(c=>c.act.outdoor && c.w==="slunecno"),
+    ticket:     chosen.some(c=>c.act.ticket),
+    eveOut:     !!(vecer && vecer.act.outdoor)
+  };
+  // co se musí sbalit (láhev vždy; nástrahy nikdy)
+  const needed={ lahev:true, destnik:cond.rain, krem:cond.outdoorSun, vstupenky:cond.ticket, bunda:cond.eveOut, plysak:false, ucebnice:false };
+  // správná odpověď v uzlech (true = ANO)
+  const DEC={ d1:cond.rain, d2:cond.outdoorSun, d3:cond.ticket, d4:cond.eveOut };
+
+  const ITEMS=[
+    {id:"lahev",    ic:"💧", name:"Láhev s vodou"},
+    {id:"destnik",  ic:"🌂", name:"Deštník"},
+    {id:"krem",     ic:"🧴", name:"Krém a čepice"},
+    {id:"vstupenky",ic:"🎫", name:"Vstupenky"},
+    {id:"bunda",    ic:"🧥", name:"Lehká bunda"},
+    {id:"plysak",   ic:"🧸", name:"Plyšák"},
+    {id:"ucebnice", ic:"📚", name:"Učebnice"}
+  ];
+  const itemById=id=>ITEMS.find(i=>i.id===id);
+  const poolOrder=(function(){const a=ITEMS.map(i=>i.id);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;})();
+
+  /* ---------- kroky ---------- */
+  const steps=["d1","d2","d3","d4","pack","end"];
+  const pos=id=>steps.indexOf(id);
+
+  /* ---------- diagram (žebřík rozhodnutí) ---------- */
+  const DIA={ w:470, h:540,
+    nodes:{
+      start:{x:128,y:12, w:150,h:34,kind:"se",    icon:"🎒",label:"Start"},
+      d1:   {x:88, y:64, w:220,h:46,kind:"dec",             label:"Má dnes pršet?"},
+      i1:   {x:332,y:71, w:120,h:34,kind:"leaf",  icon:"🌂",label:"Deštník"},
+      d2:   {x:88, y:146,w:220,h:46,kind:"dec",             label:"Venku za slunce?"},
+      i2:   {x:332,y:153,w:120,h:34,kind:"leaf",  icon:"🧴",label:"Krém+čepice"},
+      d3:   {x:88, y:228,w:220,h:46,kind:"dec",             label:"Vstupenka na aktivitu?"},
+      i3:   {x:332,y:235,w:120,h:34,kind:"leaf",  icon:"🎫",label:"Vstupenky"},
+      d4:   {x:88, y:310,w:220,h:46,kind:"dec",             label:"Večer program venku?"},
+      i4:   {x:332,y:317,w:120,h:34,kind:"leaf",  icon:"🧥",label:"Bunda"},
+      pack: {x:108,y:398,w:180,h:48,kind:"action",icon:"🎒",label:"Sbal batoh"},
+      end:  {x:128,y:484,w:150,h:34,kind:"se",    icon:"✅",label:"Hotovo"}
+    },
+    edges:[
+      {id:"s1",pts:[[198,46],[198,64]],  prog:0},
+      {id:"e12",pts:[[198,110],[198,146]],prog:1},
+      {id:"e23",pts:[[198,192],[198,228]],prog:2},
+      {id:"e34",pts:[[198,274],[198,310]],prog:3},
+      {id:"e4p",pts:[[198,356],[198,398]],prog:4},
+      {id:"epe",pts:[[198,446],[198,484]],prog:5},
+      {id:"b1",pts:[[308,88],[332,88]],  dec:"d1"},
+      {id:"b2",pts:[[308,170],[332,170]],dec:"d2"},
+      {id:"b3",pts:[[308,252],[332,252]],dec:"d3"},
+      {id:"b4",pts:[[308,334],[332,334]],dec:"d4"}
+    ],
+    labels:[
+      {x:312,y:72,t:"ANO"},{x:312,y:154,t:"ANO"},{x:312,y:236,t:"ANO"},{x:312,y:318,t:"ANO"}
+    ]
+  };
+
+  /* ---------- stav ---------- */
+  let app="plocha";
+  let currentId="pruvodce";
+  let mailRead=false;
+  let hintLevel=0;
+  let si=0;
+  const answers={};              // d1..d4
+  const placement={};            // item -> pool/batoh/doma
+  let packWrong=[];
+
+  const atEnd=()=>steps[si]==="end";
+  const curDec=()=>{ const s=steps[si]; return (s==="d1"||s==="d2"||s==="d3"||s==="d4")?s:null; };
+
+  function diaNodeState(key){
+    if(key==="start") return "done";
+    if(key==="end")   return si>=pos("end")?"current":"idle";
+    if(key==="pack")  return si>pos("pack")?"done":(si===pos("pack")?"current":"idle");
+    if(key[0]==="d"){ const p=pos(key); return si>p?"done":(si===p?"current":"idle"); }
+    if(key[0]==="i"){ const d="d"+key[1]; if(answers[d]===undefined) return "idle"; return answers[d]==="ANO"?"done":"skip"; }
+    return "idle";
+  }
+  function edgeState(e){
+    if(e.prog!==undefined) return si>e.prog?"on":(si===e.prog && e.prog===0?"on":"idle");
+    if(e.dec){ if(answers[e.dec]===undefined) return "idle"; return answers[e.dec]==="ANO"?"on":"cut"; }
+    return "idle";
+  }
+  function diagramHTML(live){
+    const edges=DIA.edges.map(e=>`<polyline class="edge ${live?edgeState(e):'idle'}" points="${e.pts.map(p=>p.join(',')).join(' ')}" marker-end="url(#arr)"/>`).join("");
+    const nodes=Object.entries(DIA.nodes).map(([key,n])=>{
+      const st=live?diaNodeState(key):"idle";
+      let badge="";
+      if(live && st==="done" && key[0]==="d" && answers[key]) badge=`<span class="dbadge">${answers[key]}</span>`;
+      const icon=n.kind==="dec"?"🔀":(n.icon||"");
+      return `<div class="dnode ${n.kind} ${st}" style="left:${n.x}px;top:${n.y}px;width:${n.w}px;height:${n.h}px"><span class="dic">${icon}</span><span class="dlbl">${n.label}</span>${badge}</div>`;
+    }).join("");
+    const labels=DIA.labels.map(l=>`<div class="dlabel" style="left:${l.x}px;top:${l.y}px">${l.t}</div>`).join("");
+    return `<div class="diagram-wrap"><div class="diagram" style="width:${DIA.w}px;height:${DIA.h}px">
+      <svg class="dia-svg" width="${DIA.w}" height="${DIA.h}" viewBox="0 0 ${DIA.w} ${DIA.h}">
+        <defs><marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#9aa2ae"/></marker></defs>
+        ${edges}</svg>${nodes}${labels}</div></div>`;
+  }
+
+  /* ---------- e-maily ---------- */
+  const emails=[
+    { id:"pruvodce", unread:true, sender:"Marco", initials:"M", color:"#b4009e",
+      subject:"Než vyrazíme — sbal se! 🎒", time:"9:05",
+      preview:"Vezmi si do batohu jen to, co se dnes bude hodit…",
+      body:`<p>Super, máš naplánovaný den! 🎉</p>
+        <p>Než vyrazíme, <strong>sbal si batoh</strong>. Vezmi si jen to, co se dnes <strong>opravdu bude hodit</strong> — podle svého <strong>plánu</strong> a <strong>počasí</strong>. Co nepotřebuješ, nech v hotelu. 🏨</p>
+        <p>V aplikaci <strong>Sbalení 🎒</strong> tě provede rozhodovací strom: u každé otázky se podívej na plán a předpověď vlevo a odpověz <strong>ANO/NE</strong>. Pak batoh sbal. Jdeme na to! Marco</p>` },
+    { id:"mama", unread:false, sender:"Máma", initials:"M", color:"#107c10",
+      subject:"Užij si výlet! 😘", time:"po",
+      preview:"Nezapomeň pláštěnku, ať nenastydneš…",
+      body:`<p>Ahoj, užij si dnešní výlet! Sbal si rozumně — ať nejsi obtěžkaný zbytečnostmi. 😘 Máma</p>` }
+  ];
+
+  const apps=[
+    {id:"plocha",icon:"🖥️",label:"Plocha"},{id:"posta",icon:"📧",label:"Pošta"},
+    {id:"sbaleni",icon:"🎒",label:"Sbalení"},{id:"napoveda",icon:"💡",label:"Nápověda"}
+  ];
+
+  /* ---------- rail ---------- */
+  function renderRail(){
+    document.getElementById("rail").innerHTML=`<div class="rail-title">Aplikace</div>`+
+      apps.map(a=>{ let glow="";
+        if(a.id==="posta" && !mailRead) glow="glow";
+        if(a.id==="sbaleni" && mailRead && !atEnd()) glow="glow";
+        return `<button class="rail-app ${app===a.id?'active':''} ${glow}" data-app="${a.id}"><span class="ri">${a.icon}</span><span class="rl">${a.label}</span></button>`;
+      }).join("");
+  }
+
+  /* ---------- plocha ---------- */
+  function plochaHTML(){
+    const pg=!mailRead, sg=mailRead&&!atEnd();
+    const posta=`<button class="desk-icon ${pg?'glow':''}" data-app="posta"><span class="di">📧</span><span class="dl">Pošta</span>${pg?'<span class="start-here">Nový e-mail 👆</span>':''}</button>`;
+    const sbal=`<button class="desk-icon ${sg?'glow':''}" data-app="sbaleni"><span class="di">🎒</span><span class="dl">Sbalení</span>${sg?'<span class="start-here">Sbal se 👆</span>':''}</button>`;
+    const napo=`<button class="desk-icon" data-app="napoveda"><span class="di">💡</span><span class="dl">Nápověda</span></button>`;
+    const deco=["🗑️ Koš"].map(d=>{const[i,...n]=d.split(" ");return `<div class="desk-icon disabled"><span class="di">${i}</span><span class="dl">${n.join(" ")}</span></div>`;}).join("");
+    return `<div class="desktop"><div class="plane-deco">🎒</div><div class="desk-grid">${posta}${sbal}${napo}${deco}</div></div>`;
+  }
+
+  /* ---------- mail ---------- */
+  function listHTML(){
+    return emails.map(e=>`
+      <div class="email-row ${e.unread?'unread':''} ${e.id===currentId?'selected':''}" data-mail="${e.id}">
+        <div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="email-main">
+          <div class="email-line1"><span class="email-sender">${e.sender}</span><span class="email-time">${e.time}</span></div>
+          <div class="email-subject">${e.subject}</div><div class="email-preview">${e.preview}</div>
+        </div><div class="dot ${e.unread?'':'hidden'}"></div></div>`).join("");
+  }
+  function readerHTML(){
+    const e=emails.find(x=>x.id===currentId);
+    return `<div class="subject">${e.subject}</div>
+      <div class="reader-head"><div class="avatar" style="background:${e.color}">${e.initials}</div>
+        <div class="reader-from"><div class="name">${e.sender}</div><div class="meta">komu: mně &nbsp;•&nbsp; dnes ${e.time}</div></div></div>
+      <div class="reader-body">${e.body}</div>`;
+  }
+  function postaHTML(){
+    const unread=emails.filter(e=>e.unread).length;
+    return `<div class="mailapp"><div class="app-title">📧 Pošta <span class="search">🔍&nbsp; Hledat v e-mailech</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="mail-body">
+        <nav class="folders"><button class="compose">✏️&nbsp; Nový e-mail</button>
+          <ul><li class="active">📥 Doručená pošta ${unread?`<span class="cnt">${unread}</span>`:''}</li>
+          <li>📤 Odeslaná pošta</li><li>📄 Koncepty</li><li>🗑️ Koš</li><li>🚫 Nevyžádaná pošta</li></ul></nav>
+        <section class="list"><div class="list-head">Doručená pošta</div>${listHTML()}</section>
+        <section class="reader">${readerHTML()}</section>
+      </div></div>`;
+  }
+
+  /* ---------- Sbalení ---------- */
+  function planPanelHTML(){
+    const rows=chosen.map(c=>{
+      const tags=`${c.act.outdoor?'<span class="pr-tags">🌳</span>':''}${c.act.ticket?'<span class="pr-tags">🎫</span>':''}`;
+      return `<div class="plan-row">
+        <div class="pr-head"><span>${c.slot.ic} ${c.slot.name}</span><span class="pr-weather">${WMAP[c.w].ic} ${WMAP[c.w].lbl}</span></div>
+        <div class="pr-act">${c.act.ic} ${c.act.name} ${tags}</div></div>`;
+    }).join("");
+    return `<div class="bag-panel">
+      <h3>Můj plán dne</h3>
+      <div class="bag-card">${rows}</div>
+      <div class="legend">🌳 = aktivita venku &nbsp;·&nbsp; 🎫 = je potřeba vstupenka</div>
+    </div>`;
+  }
+  function packHTML(){
+    const zoneItems=z=>poolOrder.filter(id=>(placement[id]||"pool")===z).map(itemById);
+    const item=i=>`<div class="ritem ${packWrong.includes(i.id)?'wrong':''}" draggable="true" data-item="${i.id}">
+        <span>${i.ic}</span><span>${i.name}</span>
+        <span class="rbtns"><button data-place="${i.id}:batoh" title="Vzít">🎒</button><button data-place="${i.id}:doma" title="Nechat doma">🏠</button></span></div>`;
+    const z=(id,cls,title)=>`<div class="rzone ${cls}" data-bin="${id}"><h4>${title}</h4>${zoneItems(id).map(item).join("")}</div>`;
+    return `<div class="pack">${z("pool","pool","⬇️ Věci")}${z("batoh","batoh","🎒 Vzít s sebou")}${z("doma","doma","🏠 Nechat doma")}</div>
+      <div class="ac-actions" style="margin-top:12px"><button class="btn btn-primary" data-pack-done="1">Hotovo, sbaleno</button></div>`;
+  }
+  function wrap(title,q,inner,note){
+    return `<div class="active-card" id="activeCard"><h3>${title}</h3><div class="q">${q}</div>${note?`<div class="ac-note">${note}</div>`:""}${inner}<div id="afb"></div></div>`;
+  }
+  const yesno=key=>`<div class="ac-actions"><button class="btn btn-choice" data-dec="${key}:ANO">ANO</button><button class="btn btn-choice" data-dec="${key}:NE">NE</button></div>`;
+  function activeCardHTML(){
+    const s=steps[si];
+    if(s==="d1") return wrap("🔀 Rozhodnutí","Má dnes někdy pršet?", yesno("d1"), "Mrkni na předpověď u každé části dne v panelu vlevo.");
+    if(s==="d2") return wrap("🔀 Rozhodnutí","Máš venkovní aktivitu v době, kdy je slunečno?", yesno("d2"), "Najdi v plánu aktivitu s 🌳 a podívej se, jestli je v tu dobu ☀️.");
+    if(s==="d3") return wrap("🔀 Rozhodnutí","Potřebuješ na některou aktivitu vstupenku?", yesno("d3"), "Aktivity se vstupenkou mají v plánu značku 🎫.");
+    if(s==="d4") return wrap("🔀 Rozhodnutí","Jdeš večer na program ven?", yesno("d4"), "Podívej se na večerní aktivitu — je venkovní (🌳)?");
+    if(s==="pack") return wrap("🎒 Sbal batoh","Dej do batohu právě to, co dnes potřebuješ. Zbytek nech doma.",
+        packHTML(), "Láhev s vodou ber vždy. Přidej věci, které sis vybral(a) ve stromu. Plyšák ani učebnici na výlet nepotřebuješ.");
+    return `<div class="active-card"><div class="result"><div class="big">🎒✅</div>
+      <h2 style="margin:6px 0">Batoh je sbalený!</h2>
+      <p>A tím jsi <strong>dokončil(a) celou cestu Malého cestovatele</strong>. Skvělá práce! 👏</p>
+      <a class="continue" href="../../../index.html">🏁 Zpět na začátek</a></div></div>`;
+  }
+  function sbaleniHTML(){
+    return `<div class="appwin"><div class="app-title">🎒 Sbalení na výlet <span class="search">Rozhodovací strom</span>
+        <span class="avatar me" style="background:#5c2d91;margin-left:auto">TY</span></div>
+      <div class="pack-body">${planPanelHTML()}
+        <div class="work"><div class="dia-col">${diagramHTML(true)}</div><div class="card-col">${activeCardHTML()}</div></div>
+      </div></div>`;
+  }
+
+  /* ---------- nápověda ---------- */
+  const HINTS=[
+    `<b>Nápověda 1</b><p>Postupuj podle <strong>rozhodovacího stromu</strong> shora dolů. U každé otázky 🔀 odpověz <strong>ANO/NE</strong> podle svého <strong>plánu</strong> a <strong>počasí</strong> v panelu vlevo.</p>`,
+    `<b>Nápověda 2</b><p><strong>🌂 Deštník</strong> ber, když má pršet. <strong>🧴 Krém a čepici</strong>, když jsi venku za slunce. <strong>🎫 Vstupenky</strong>, když je máš na aktivitu potřeba. <strong>🧥 Bundu</strong>, když jdeš večer ven.</p>`,
+    `<b>Nápověda 3</b><p><strong>💧 Láhev s vodou</strong> ber vždy. Co se dnes nehodí (a <strong>plyšáka ani učebnici</strong>) nech doma — ber jen to, co opravdu využiješ.</p>`
+  ];
+  function napovedaHTML(){
+    const cards=HINTS.slice(0,hintLevel).map(h=>`<div class="hint-card">${h}</div>`).join("");
+    const btn=hintLevel<HINTS.length?`<button class="reveal-btn" id="revealHint">${hintLevel===0?'Zobrazit nápovědu':'Další nápověda'}</button>`:`<p class="all-shown">To je vše. Teď to zkus! 😊</p>`;
+    return `<div class="appwin"><div class="app-title">💡 Nápověda</div>
+      <div class="napoveda"><div class="np-wrap"><p class="np-intro">Nevíš si rady se sbalením? Odkrývej nápovědy postupně.</p>${cards}${btn}</div></div></div>`;
+  }
+
+  /* ---------- render ---------- */
+  function renderScreen(){
+    document.getElementById("screen").innerHTML =
+      app==="plocha"?plochaHTML():app==="posta"?postaHTML():app==="sbaleni"?sbaleniHTML():napovedaHTML();
+  }
+  function render(){ renderRail(); renderScreen(); }
+  function openApp(id){
+    if(id==="posta" && !mailRead){ mailRead=true; const m=emails.find(e=>e.id==="pruvodce"); if(m) m.unread=false; }
+    app=id; render();
+  }
+  function selectEmail(id){ const e=emails.find(x=>x.id===id); if(e&&e.unread) e.unread=false; currentId=id; renderScreen(); }
+  function activeMsg(html,cls){
+    const fb=document.getElementById("afb"); if(fb) fb.innerHTML=`<span class="${cls}">${html}</span>`;
+    const c=document.getElementById("activeCard"); if(c){ c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); }
+  }
+  function advance(){ if(si<steps.length-1) si++; render(); }
+
+  function answerDecision(key,val){
+    const correct = DEC[key] ? "ANO" : "NE";
+    if(val===correct){ answers[key]=val; advance(); }
+    else activeMsg("To neodpovídá tvému plánu a počasí. Zkontroluj panel vlevo. 🔁","err");
+  }
+  function placeItem(id,zone){ placement[id]=zone; packWrong=packWrong.filter(x=>x!==id); renderScreen(); }
+  function validatePack(){
+    let unplaced=0; const wrong=[];
+    ITEMS.forEach(i=>{ const p=placement[i.id];
+      if(!p||p==="pool"){ unplaced++; return; }
+      const want = needed[i.id] ? "batoh" : "doma";
+      if(p!==want) wrong.push(i.id); });
+    if(unplaced>0){ activeMsg(`Ještě jsi netřídil(a) všechny věci (zbývá ${unplaced}). 🎒`,"err"); return; }
+    if(wrong.length>0){ packWrong=wrong; renderScreen(); activeMsg("Něco v batohu nesedí — buď ti tam něco zbytečného je, nebo něco chybí. 🔁","err"); return; }
+    packWrong=[]; advance();
+  }
+
+  /* ---------- eventy ---------- */
+  document.addEventListener("click", e=>{
+    const railBtn=e.target.closest("[data-app]"); if(railBtn){ openApp(railBtn.dataset.app); return; }
+    const row=e.target.closest("[data-mail]"); if(row){ selectEmail(row.dataset.mail); return; }
+    if(e.target.id==="revealHint"){ if(hintLevel<HINTS.length){hintLevel++; renderScreen();} return; }
+    const dec=e.target.closest("[data-dec]"); if(dec){ const[k,v]=dec.dataset.dec.split(":"); answerDecision(k,v); return; }
+    const place=e.target.closest("[data-place]"); if(place){ const[id,z]=place.dataset.place.split(":"); placeItem(id,z); return; }
+    if(e.target.closest("[data-pack-done]")){ validatePack(); return; }
+  });
+  document.addEventListener("dragstart", e=>{ const it=e.target.closest("[data-item]"); if(it) e.dataTransfer.setData("text/plain",it.dataset.item); });
+  document.addEventListener("dragover", e=>{ if(e.target.closest("[data-bin]")) e.preventDefault(); });
+  document.addEventListener("drop", e=>{ const bin=e.target.closest("[data-bin]"); if(bin){ e.preventDefault(); const id=e.dataTransfer.getData("text/plain"); if(id) placeItem(id,bin.dataset.bin); } });
+
+  render();
+</script>
+</body>
+</html>

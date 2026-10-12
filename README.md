@@ -8,7 +8,7 @@ Webová aplikace určená pro výuku informatiky na 1. stupni ZŠ (5. třída). 
 
 ## O projektu
 
-Žák se vydá na **cestu za kamarádem** a cestou vyřeší **9 úkolů z informatiky**. Příběh i úkoly jsou v češtině a procvičují látku ICT hravou a praktickou formou. Všechno běží na straně klienta (žádná instalace, žádné přihlašování, žádné ukládání dat) — každý splněný úkol na konci otevře ten další.
+Žák se vydá na **cestu za kamarádem** a cestou vyřeší **10 úkolů z informatiky**. Příběh i úkoly jsou v češtině a procvičují látku ICT hravou a praktickou formou. Všechno běží na straně klienta (žádná instalace, žádné přihlašování, žádné ukládání dat) — každý splněný úkol na konci otevře ten další.
 
 Úvodní stránka (`index.html`) nabízí start cesty a drobné „tajné“ tlačítko 🔑 vpravo dole, kterým se dá skočit rovnou na konkrétní úkol (např. když se žák k rozpracované cestě vrací později).
 
@@ -52,6 +52,10 @@ Podle předpovědi žák sestaví plán dne — aktivitu na ráno, odpoledne a v
 Žák se podle svého plánu a počasí sbalí na výlet — projde rozhodovací strom a zabalí batoh.
 **Prvky:** **rozhodovací strom** s **kombinovanou podmínkou** (plán × počasí) · **předání dat z úkolu 8** (plán a počasí přes URL parametry; bez nich si úkol vygeneruje vlastní) · **drag & drop balení se smyčkou** · rozlišení potřebného a zbytečného (nástrahy, které patří domů).
 
+### 10. Pohlednice z pixelů 🎨
+Na závěr cesty žák pošle domů pohlednici — vybarví obrázek podle čísel a z pixelů se složí památka daného města (Big Ben, Eiffelovka, Dóm, Palacio Real).
+**Prvky:** **reprezentace obrazu** (obrázek = mřížka pixelů, každý pixel = číslo barvy) · vybarvování **podle čísel** (color-by-number) s paletou a kontrolou · odhalení detailní pohlednice po úspěchu · zakončení celé cesty.
+
 ## Struktura
 
 ```
@@ -66,7 +70,8 @@ mesta/
     06-sifra-stanice/
     07-trasa-metra/
     08-plan-vyletu/
-    09-sbal-batoh/         – každý úkol = samostatná stránka s vlastní URL
+    09-sbal-batoh/
+    10-pohlednice/         – každý úkol = samostatná stránka s vlastní URL
   b/                       – město B (kopie A s jiným městem; stejná struktura)
   c/                       – město C (kopie A s jiným městem; stejná struktura)
   d/                       – město D (kopie A s jiným městem; stejná struktura)

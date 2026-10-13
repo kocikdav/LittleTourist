@@ -352,7 +352,7 @@
         <div class="row"><span class="k">Odlet</span><span>11:40</span></div>
         <div class="row"><span class="k">Brána</span><span>dle tabule</span></div>
       </div>
-      <div class="tip">Letíš <strong>s přestupem</strong> — teď v Praze nastupuješ na let do <strong>Vídně</strong> (ne přímo do Madridu!). Najdi let <strong>${MINE.num}</strong> na tabuli, zjisti <strong>bránu</strong> a sleduj <strong>Stav</strong>. Cesta k bráně trvá <strong>${WALK} min</strong>. Obě letenky máš v aplikaci <strong>Aerolinky ✈️</strong>.</div>
+      <div class="tip">Letíš <strong>s přestupem</strong> — teď v Praze nastupuješ na let do <strong>Vídně</strong> (ne přímo do Madridu!). Najdi let <strong>${MINE.num}</strong> na tabuli, zjisti <strong>bránu</strong> a sleduj <strong>Stav</strong>. Cesta k bráně je hned, ale <strong>návrat</strong> k tabuli stojí <strong>${WALK} min</strong>. Obě letenky máš v aplikaci <strong>Aerolinky ✈️</strong>.</div>
     </div>`;
   }
   function halaMainHTML(){
@@ -361,7 +361,7 @@
       <h2 class="sec" style="margin-top:22px">Máš ještě čas. Co budeš dělat?</h2>
       <div class="acts">${ACTS.map(a=>`<button class="act" data-act="${a.id}"><span class="ai">${a.ic}</span>${a.label}<span class="m">+${a.min} min</span></button>`).join("")}</div>
       <div id="afb" style="margin:10px 0 2px">${lastMsg}</div>
-      <h2 class="sec" style="margin-top:14px">🚶 Vydej se k bráně — ke které jdeš? (cesta trvá ${WALK} min)</h2>
+      <h2 class="sec" style="margin-top:14px">🚶 Vydej se k bráně — ke které jdeš? (cesta tam je hned; návrat k tabuli stojí ${WALK} min)</h2>
       <div class="gate-picker">${GATES.map(g=>`<button class="gatebtn" data-gogate="${g}">Brána ${g}</button>`).join("")}</div>`;
   }
   function gateCard(g,body,actions){
@@ -411,7 +411,7 @@
   const HINTS=[
     `<b>Nápověda 1</b><p>Letíš s <strong>přestupem</strong>! V Praze nastupuješ na <strong>první let do Vídně</strong>, ne přímo do Madridu. Lety do Madridu na tabuli <strong>nejsou tvoje</strong> — nenech se nachytat.</p>`,
     `<b>Nápověda 2</b><p>Najdi na tabuli let <strong>IA-118</strong> (podle <strong>čísla letu</strong> z aplikace Aerolinky). Na tabuli je i jiný let do Vídně — ten taky není tvůj!</p>`,
-    `<b>Nápověda 3</b><p>Přečti si <strong>bránu</strong> svého letu a jdi právě k té, až bude <em>Nástup</em>. Cesta trvá <strong>${WALK} min</strong>; špatná brána nebo brzký příchod tě vrátí k tabuli a ztrácíš čas.</p>`
+    `<b>Nápověda 3</b><p>Přečti si <strong>bránu</strong> svého letu a jdi právě k té, až bude <em>Nástup</em>. K bráně se dostaneš hned, ale <strong>špatná brána</strong> nebo <strong>brzký příchod</strong> tě vrátí k tabuli a stojí tě to <strong>${WALK} min</strong>.</p>`
   ];
   function napovedaHTML(){
     const cards=HINTS.slice(0,hintLevel).map(h=>`<div class="hint-card">${h}</div>`).join("");
@@ -438,7 +438,7 @@
     now+=a.min; lastMsg=`${a.ic} ${a.label} (+${a.min} min). Je ${fmt(now)}.`;
     render();
   }
-  function goGate(g){ if(boarded||missed()) return; now+=WALK; loc="brana"; pickedGate=g; lastMsg=""; render(); }
+  function goGate(g){ if(boarded||missed()) return; loc="brana"; pickedGate=g; lastMsg=""; render(); }
   function backHall(){ if(boarded||missed()) return; now+=WALK; loc="hala"; render(); }
   function boardPlane(){ if(pickedGate===MINE.gate && now>=MINE.board && now<MINE.close){ boarded=true; } render(); }
   function restart(){ now=START; loc="hala"; pickedGate=null; boarded=false; lastMsg=""; render(); }
